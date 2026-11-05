@@ -1,0 +1,27 @@
+         DULCERÍA LA BENDICIÓN          
+    CORTE DE CAJA / CIERRE DE TURNO     
+========================================
+TURNO ID: #99
+APERTURA: 2026-11-05 08:00:00
+CIERRE:   2026-11-05 20:00:00
+----------------------------------------
+(+) Fondo Inicial de Caja: $      200.00
+(+) Ventas en Efectivo:   $      850.00
+    Número de ventas:                 15
+(+) Entradas de Dinero:   $       50.00
+(-) Salidas de Dinero:    $      100.00
+========================================
+TOTAL ESPERADO EN CAJA:   $     1000.00
+========================================
+Costo de Mercancía:       $      500.00
+GANANCIA ESTIMADA:        $      350.00
+----------------------------------------
+         DETALLE DE MOVIMIENTOS         
+TIPO     MOTIVO                    MONTO
+----------------------------------------
+SALIDA   Pago a repartidor    $   100.00
+----------------------------------------
+
+
+Firma del Responsable: __________________
+

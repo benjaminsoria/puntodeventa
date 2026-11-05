@@ -1,0 +1,20 @@
+         DULCERÍA LA BENDICIÓN          
+    Av. Principal #123, Col. Centro     
+           Tel: 55-1234-5678            
+========================================
+FOLIO: T-99999         CAJA: 1
+FECHA: 2026-11-05 10:00:00
+----------------------------------------
+CANT  PRODUCTO           P.UNIT    TOTAL
+----------------------------------------
+2     Mazapán de la R..    7.00    14.00
+1     Pelón Pelo Rico     11.50    11.50
+========================================
+      TOTAL DE ARTICULOS:              3
+           TOTAL A PAGAR: $        25.50
+                PAGO CON: $        50.00
+               SU CAMBIO: $        24.50
+========================================
+ ¡Gracias por su compra! Vuelva pronto. 
+
+
