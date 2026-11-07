@@ -102,10 +102,23 @@ class DialogoCobro(object):
         self.lbl_cambio = tk.Label(self.frame_cambio, text="$0.00", font=("Arial", 28, "bold"), fg="#2B6CB0", bg="#EDF2F7")
         self.lbl_cambio.pack()
 
-        # Opciones
-        self.var_ticket = tk.BooleanVar(value=True)
-        chk_ticket = tk.Checkbutton(frame_principal, text="Guardar copia del ticket de venta", variable=self.var_ticket, font=("Arial", 11), bg="#F0F4F8")
-        chk_ticket.pack(pady=5)
+        # Opciones de Impresión y Cajón
+        cfg = database.obtener_configuracion()
+        auto_imprimir = bool(cfg.get('imprimir_automatico', 1))
+        auto_cajon = bool(cfg.get('abrir_cajon_automatico', 1))
+
+        frame_opciones = tk.Frame(frame_principal, bg="#F0F4F8")
+        frame_opciones.pack(pady=6)
+
+        self.var_imprimir = tk.BooleanVar(value=auto_imprimir)
+        chk_imp = tk.Checkbutton(frame_opciones, text="Imprimir Ticket", variable=self.var_imprimir,
+                                 font=("Arial", 11, "bold"), bg="#F0F4F8", fg="#2D3748")
+        chk_imp.pack(side=tk.LEFT, padx=10)
+
+        self.var_cajon = tk.BooleanVar(value=auto_cajon)
+        chk_caj = tk.Checkbutton(frame_opciones, text="Abrir Cajón", variable=self.var_cajon,
+                                 font=("Arial", 11, "bold"), bg="#F0F4F8", fg="#2D3748")
+        chk_caj.pack(side=tk.LEFT, padx=10)
 
         # Botones de Acción
         frame_acciones = tk.Frame(frame_principal, bg="#F0F4F8")
@@ -171,12 +184,35 @@ class DialogoCobro(object):
             messagebox.showerror("Error al guardar venta", msg, parent=self.top)
             return
 
-        # Generar ticket si está habilitado
-        if self.var_ticket.get():
-            cfg = database.obtener_configuracion()
-            ticket.guardar_ticket_en_archivo(datos_ticket, cfg)
+        cfg = database.obtener_configuracion()
+
+        # Siempre guardar copia de respaldo en archivo de texto
+        ticket.guardar_ticket_en_archivo(datos_ticket, cfg)
+
+        debe_imprimir = self.var_imprimir.get()
+        debe_abrir_cajon = self.var_cajon.get()
+
+        error_periferico = None
+        if debe_imprimir:
+            # Imprime ticket y abre cajón en el mismo flujo si ambos están activos
+            ok_imp, msg_imp = ticket.imprimir_ticket(datos_ticket, cfg, abrir_cajon_tambien=debe_abrir_cajon)
+            if not ok_imp:
+                error_periferico = "Aviso de Impresora:\n" + msg_imp
+        elif debe_abrir_cajon:
+            # Si solo se solicitó abrir el cajón sin imprimir
+            ok_caj, msg_caj = ticket.abrir_cajon(cfg.get('impresora', ''))
+            if not ok_caj:
+                error_periferico = "Aviso de Cajón:\n" + msg_caj
 
         self.top.destroy()
+
+        if error_periferico:
+            messagebox.showwarning(
+                "Aviso de Hardware",
+                "La venta se registró exitosamente, pero:\n\n"
+                "{}\n\nVerifique que la impresora esté encendida o revise [F5] Ajustes.".format(error_periferico),
+                parent=self.parent
+            )
 
         # Mostrar mensaje de éxito con el cambio bien grande
         self.mostrar_exito(cambio, datos_ticket.get('folio', ''))
@@ -439,11 +475,16 @@ class FrameVentas(tk.Frame):
         self.lbl_cant_articulos.pack()
 
         # Botón Enorme de Cobro
-        self.btn_cobrar = tk.Button(frame_derecho, text="COBRAR\n(Tecla F12)", font=("Arial", 16, "bold"), bg="#38A169", fg="white", pady=18,
+        self.btn_cobrar = tk.Button(frame_derecho, text="COBRAR\n(Tecla F12)", font=("Arial", 16, "bold"), bg="#38A169", fg="white", pady=16,
                                     cursor="hand2", command=self.iniciar_cobro)
-        self.btn_cobrar.pack(fill=tk.X, pady=(20, 10))
+        self.btn_cobrar.pack(fill=tk.X, pady=(15, 6))
 
-        lbl_ayuda = tk.Label(frame_derecho, text="Atajos rápidos:\n- F12: Abrir ventana de cobro\n- Enter: Agregar producto\n- Esc: Regresar a búsqueda",
+        # Botón Manual para Abrir Cajón
+        self.btn_cajon = tk.Button(frame_derecho, text="Abrir Cajón (F8)", font=("Arial", 11, "bold"), bg="#4A5568", fg="white", pady=8,
+                                   cursor="hand2", command=self.abrir_cajon_manual)
+        self.btn_cajon.pack(fill=tk.X, pady=(0, 10))
+
+        lbl_ayuda = tk.Label(frame_derecho, text="Atajos rápidos:\n- F12: Cobrar venta actual\n- F8: Abrir cajón de dinero\n- Enter: Agregar dulce escaneado\n- Esc: Regresar a búsqueda",
                              font=("Arial", 9), justify="left", bg="#EDF2F7", fg="#718096")
         lbl_ayuda.pack(side=tk.BOTTOM, pady=5)
 
@@ -636,3 +677,16 @@ class FrameVentas(tk.Frame):
         self.entry_busqueda.focus_set()
         # Notificar a la app principal para actualizar estados si es necesario
         self.app.actualizar_barra_estado()
+
+    def abrir_cajon_manual(self):
+        """Dispara manualmente la apertura del cajón monedero."""
+        cfg = database.obtener_configuracion()
+        exito, msg = ticket.abrir_cajon(cfg.get('impresora', ''))
+        if not exito:
+            messagebox.showwarning(
+                "Aviso de Cajón",
+                "No se pudo abrir el cajón de dinero:\n\n{}\n\n"
+                "Verifique que la impresora esté encendida, con cable USB/serial conectado\n"
+                "y el cable RJ11 del cajón conectado a la impresora.".format(msg),
+                parent=self
+            )

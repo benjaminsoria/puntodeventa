@@ -43,8 +43,12 @@ En la parte superior de la pantalla encontrará las 5 secciones del sistema:
    - Verá el **TOTAL A COBRAR** en números gigantes.
    - Haga clic en el botón del billete con el que le pagan (`$20`, `$50`, `$100`, `$200`, `$500`) o escriba la cantidad en el recuadro "Paga con:".
    - **El sistema calculará automáticamente el CAMBIO A ENTREGAR en letras grandes y color verde.**
+   - Opciones activadas por defecto:
+     - `[✓] Imprimir Ticket`
+     - `[✓] Abrir Cajón`
 3. Presione la tecla **Enter** o clic en **CONFIRMAR COBRO**.
-4. ¡Listo! La venta se guardará y la pantalla quedará lista para atender al siguiente cliente.
+4. ¡Listo! La venta se guardará, **el cajón de dinero se abrirá al instante** para entregar el cambio y **se imprimirá el ticket de compra**.
+5. Para abrir el cajón en cualquier momento (por ejemplo para dar cambio o ingresar billetes), presione la tecla **F8** o haga clic en el botón **Abrir Cajón (F8)**.
 
 ---
 
@@ -92,7 +96,7 @@ Haga clic en la pestaña **[F3] CORTE DE CAJA**.
    - **TOTAL QUE DEBE HABER EN EL CAJÓN**
    - **Su Ganancia estimada del día**
 3. Cuente su dinero en efectivo e ingréselo para confirmar que no falte ni sobre dinero.
-4. Haga clic en **Finalizar Corte**. Se guardará un archivo de texto con el comprobante en la carpeta `cortes`.
+4. Haga clic en **Finalizar Corte**. Se guardará un archivo de texto con el comprobante en la carpeta `cortes` y podrá imprimir el comprobante térmico directamente a su impresora.
 
 ---
 
@@ -109,6 +113,30 @@ Al ser una computadora sin internet, hacer una copia de seguridad a su memoria U
 
 ---
 
+## 6. Configuración de Impresora y Cajón de Dinero
+
+En la pestaña **[F5] AJUSTES / USB** encontrará la sección central **Impresora y Cajón de Dinero**:
+
+### 1. Conexión del Equipo:
+- **Impresora:** Conéctela por USB a la computadora. Windows XP la detectará (ej. `POS-58`, `POS-80` o `Generic / Text Only`).
+- **Cajón de Dinero:** Conecte el cable RJ11 (parecido al cable telefónico) en el conector marcado como **DK** o **Drawer** en la parte trasera de la impresora térmica.
+
+### 2. Probar y Configurar en el Sistema:
+1. En **Impresora de Tickets**, seleccione su impresora o deje `(Predeterminada de Windows)`.
+2. Haga clic en **`🖨 Probar Impresión de Ticket`** para confirmar que la impresora saca papel.
+3. Haga clic en **`💵 Probar Abrir Cajón`** para verificar que el cajón se abra de inmediato.
+4. Elija el ancho de su papel:
+   - `58 mm (32 car.)`: Para impresoras térmicas pequeñas estándar de 58 milímetros.
+   - `80 mm (40 car.)`: Para impresoras térmicas grandes de 80 milímetros.
+5. Deje marcadas las casillas automáticas si desea que imprima y abra el cajón en cada venta.
+6. Haga clic en **`💾 Guardar Cambios de Impresora`**.
+
+### 3. Apertura Manual y Reimpresión:
+- **Abrir Cajón sin Venta:** Presione la tecla **F8** en cualquier momento o haga clic en el botón **`Abrir Cajón (F8)`**.
+- **Reimprimir un Ticket Pasado:** Vaya a **[F4] HISTORIAL**, seleccione la venta deseada en la lista y haga clic en **`🖨 Reimprimir Ticket`**.
+
+---
+
 ## ⌨️ Resumen de Teclas Rápidas
 | Tecla | Acción |
 |---|---|
@@ -117,6 +145,7 @@ Al ser una computadora sin internet, hacer una copia de seguridad a su memoria U
 | **F3** | Ir al Corte de Caja |
 | **F4** | Ir al Historial de Ventas |
 | **F5** | Ir a Ajustes y Respaldos |
+| **F8** | **Abrir Cajón de Dinero (Manual)** |
 | **F12** | Cobrar venta actual |
 | **Enter** | Aceptar / Agregar producto / Confirmar cobro |
 | **Esc** | Cancelar o cerrar ventanitas emergentes |

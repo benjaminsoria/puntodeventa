@@ -13,6 +13,7 @@ except ImportError:
 
 import datetime
 import database
+import ticket
 
 class FrameReportes(tk.Frame):
     """Pantalla de historial de ventas y reportes."""
@@ -110,7 +111,12 @@ class FrameReportes(tk.Frame):
         frame_acciones = tk.Frame(self, bg="#EDF2F7", padx=10, pady=8, relief=tk.RIDGE, bd=1)
         frame_acciones.pack(fill=tk.X, padx=10, pady=(5, 10))
 
-        btn_cancelar_venta = tk.Button(frame_acciones, text="Cancelar Venta Seleccionada (Devuelve Productos a Stock)",
+        btn_reimprimir = tk.Button(frame_acciones, text="Reimprimir Ticket",
+                                   font=("Arial", 10, "bold"), bg="#3182CE", fg="white", padx=12, pady=4,
+                                   command=self.reimprimir_ticket_seleccionado)
+        btn_reimprimir.pack(side=tk.LEFT, padx=5)
+
+        btn_cancelar_venta = tk.Button(frame_acciones, text="Cancelar Venta Seleccionada",
                                        font=("Arial", 10, "bold"), bg="#FED7D7", fg="#9B2C2C", padx=10, pady=4,
                                        command=self.cancelar_venta_seleccionada)
         btn_cancelar_venta.pack(side=tk.LEFT, padx=5)
@@ -205,3 +211,22 @@ class FrameReportes(tk.Frame):
                     self.app.pantalla_caja.recargar()
             else:
                 messagebox.showerror("Error", msg, parent=self)
+
+    def reimprimir_ticket_seleccionado(self):
+        sel = self.tree_ventas.selection()
+        if not sel:
+            messagebox.showinfo("Seleccionar", "Por favor seleccione una venta de la lista para reimprimir su ticket.", parent=self)
+            return
+
+        id_venta = int(sel[0])
+        datos_ticket = database.preparar_datos_ticket_desde_venta(id_venta)
+        if not datos_ticket:
+            messagebox.showerror("Error", "No se pudieron obtener los datos de la venta seleccionada.", parent=self)
+            return
+
+        cfg = database.obtener_configuracion()
+        exito, msg = ticket.imprimir_ticket(datos_ticket, cfg, abrir_cajon_tambien=False)
+        if exito:
+            messagebox.showinfo("Ticket Reimpreso", "El ticket del folio {} fue enviado a la impresora con éxito.".format(datos_ticket.get('folio', '')), parent=self)
+        else:
+            messagebox.showerror("Error de Impresora", "No se pudo imprimir el ticket:\n\n{}\n\nVerifique que la impresora esté encendida.".format(msg), parent=self)

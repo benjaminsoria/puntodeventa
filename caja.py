@@ -218,6 +218,14 @@ class DialogoCorteCaja(object):
         movs = database.obtener_movimientos_turno(self.id_turno)
         ruta_archivo = ticket.guardar_corte_en_archivo(self.resumen, movs, cfg)
 
+        # Ofrecer impresión de corte en la impresora térmica si está disponible
+        impresora = ticket.resolver_nombre_impresora(cfg.get('impresora', ''))
+        if impresora:
+            if messagebox.askyesno("Imprimir Corte", "¿Desea imprimir el comprobante del corte de caja en la impresora térmica?", parent=self.top):
+                ok_imp, msg_imp = ticket.imprimir_corte(self.resumen, movs, cfg)
+                if not ok_imp:
+                    messagebox.showwarning("Aviso de Impresora", "No se pudo imprimir el comprobante del corte:\n\n{}".format(msg_imp), parent=self.parent)
+
         self.top.destroy()
 
         msg = "¡Turno cerrado exitosamente!\n\nEl reporte del corte se guardó en la carpeta 'cortes'."
@@ -289,6 +297,9 @@ class FrameCaja(tk.Frame):
         self.btn_salida = tk.Button(frame_izq, text="(-) Salida de Dinero (Gasto)", font=("Arial", 10, "bold"), bg="#FED7D7", fg="#9B2C2C", pady=6,
                                     command=lambda: self.registrar_movimiento('SALIDA'))
 
+        self.btn_abrir_cajon = tk.Button(frame_izq, text="Abrir Cajón de Dinero (F8)", font=("Arial", 10, "bold"), bg="#4A5568", fg="white", pady=6,
+                                         command=self.abrir_cajon_manual)
+
         # Columna Derecha: Tabla de Movimientos del Turno
         frame_der = tk.LabelFrame(frame_cuerpo, text=" Movimientos del Turno (Entradas y Salidas de Efectivo) ", font=("Arial", 10, "bold"), bg="#F7FAFC", fg="#2D3748", padx=10, pady=5)
         frame_der.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
@@ -331,9 +342,10 @@ class FrameCaja(tk.Frame):
         self.btn_corte.pack_forget()
         self.btn_entrada.pack_forget()
         self.btn_salida.pack_forget()
+        self.btn_abrir_cajon.pack_forget()
 
         if turno:
-            self.lbl_estado_turno.config(text="● CAJA ABIERTA (Turno #{})".format(turno['id']), fg="#276749")
+            self.lbl_estado_turno.config(text="CAJA ABIERTA (Turno #{})".format(turno['id']), fg="#276749")
             self.lbl_info_apertura.config(text="Abierta desde: {}".format(turno['fecha_inicio']))
 
             resumen = database.calcular_resumen_caja(turno['id'])
@@ -362,9 +374,10 @@ class FrameCaja(tk.Frame):
             self.btn_corte.pack(fill=tk.X, pady=(5, 4))
             self.btn_entrada.pack(fill=tk.X, pady=2)
             self.btn_salida.pack(fill=tk.X, pady=2)
+            self.btn_abrir_cajon.pack(fill=tk.X, pady=(8, 2))
 
         else:
-            self.lbl_estado_turno.config(text="○ CAJA CERRADA (No hay turno activo)", fg="#C53030")
+            self.lbl_estado_turno.config(text="CAJA CERRADA (No hay turno activo)", fg="#C53030")
             self.lbl_info_apertura.config(text="Abra un turno para registrar ventas y movimientos")
             self.lbl_monto_esperado.config(text="$0.00")
             self.lbl_desglose_fondo.config(text="$0.00")
@@ -451,3 +464,15 @@ class FrameCaja(tk.Frame):
     def al_terminar_corte(self):
         self.recargar()
         self.app.actualizar_barra_estado()
+
+    def abrir_cajon_manual(self):
+        """Abre el cajón de dinero manualmente."""
+        cfg = database.obtener_configuracion()
+        exito, msg = ticket.abrir_cajon(cfg.get('impresora', ''))
+        if not exito:
+            messagebox.showwarning(
+                "Aviso de Cajón",
+                "No se pudo abrir el cajón de dinero:\n\n{}\n\n"
+                "Verifique que la impresora esté encendida y el cable RJ11 conectado.".format(msg),
+                parent=self
+            )

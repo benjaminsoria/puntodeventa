@@ -37,9 +37,25 @@ def inicializar_db():
         telefono TEXT,
         direccion TEXT,
         mensaje_ticket TEXT,
-        ancho_ticket INTEGER DEFAULT 40
+        ancho_ticket INTEGER DEFAULT 40,
+        impresora TEXT DEFAULT '',
+        imprimir_automatico INTEGER DEFAULT 1,
+        abrir_cajon_automatico INTEGER DEFAULT 1,
+        cortar_papel INTEGER DEFAULT 1
     )
     """)
+
+    # Migración de columnas de impresora y cajón para bases de datos existentes
+    cursor.execute("PRAGMA table_info(configuracion)")
+    cols_existentes = [row[1] for row in cursor.fetchall()]
+    if 'impresora' not in cols_existentes:
+        cursor.execute("ALTER TABLE configuracion ADD COLUMN impresora TEXT DEFAULT ''")
+    if 'imprimir_automatico' not in cols_existentes:
+        cursor.execute("ALTER TABLE configuracion ADD COLUMN imprimir_automatico INTEGER DEFAULT 1")
+    if 'abrir_cajon_automatico' not in cols_existentes:
+        cursor.execute("ALTER TABLE configuracion ADD COLUMN abrir_cajon_automatico INTEGER DEFAULT 1")
+    if 'cortar_papel' not in cols_existentes:
+        cursor.execute("ALTER TABLE configuracion ADD COLUMN cortar_papel INTEGER DEFAULT 1")
 
     # Tabla de Categorías
     cursor.execute("""
@@ -131,8 +147,8 @@ def inicializar_db():
     cursor.execute("SELECT COUNT(*) FROM configuracion")
     if cursor.fetchone()[0] == 0:
         cursor.execute("""
-        INSERT INTO configuracion (id, nombre_tienda, telefono, direccion, mensaje_ticket, ancho_ticket)
-        VALUES (1, 'Dulcería La Bendición', '55-1234-5678', 'Av. Principal #123, Col. Centro', '¡Gracias por su compra! Vuelva pronto.', 40)
+        INSERT INTO configuracion (id, nombre_tienda, telefono, direccion, mensaje_ticket, ancho_ticket, impresora, imprimir_automatico, abrir_cajon_automatico, cortar_papel)
+        VALUES (1, 'Dulcería La Bendición', '55-1234-5678', 'Av. Principal #123, Col. Centro', '¡Gracias por su compra! Vuelva pronto.', 40, '', 1, 1, 1)
         """)
 
     # Categorías iniciales
@@ -179,31 +195,54 @@ def inicializar_db():
 # ==========================================================
 
 def obtener_configuracion():
-    """Obtiene los datos de configuración del negocio."""
+    """Obtiene los datos de configuración del negocio y de impresión."""
     conn = conectar_db()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM configuracion WHERE id = 1")
     row = cursor.fetchone()
     conn.close()
     if row:
-        return dict(row)
+        cfg = dict(row)
+        cfg.setdefault('ancho_ticket', 40)
+        cfg.setdefault('impresora', '')
+        cfg.setdefault('imprimir_automatico', 1)
+        cfg.setdefault('abrir_cajon_automatico', 1)
+        cfg.setdefault('cortar_papel', 1)
+        return cfg
     return {
         'nombre_tienda': 'Mi Dulcería',
         'telefono': '',
         'direccion': '',
         'mensaje_ticket': '¡Gracias por su compra!',
-        'ancho_ticket': 40
+        'ancho_ticket': 40,
+        'impresora': '',
+        'imprimir_automatico': 1,
+        'abrir_cajon_automatico': 1,
+        'cortar_papel': 1
     }
 
-def guardar_configuracion(nombre, telefono, direccion, mensaje, ancho=40):
-    """Actualiza los datos de configuración de la tienda."""
+def guardar_configuracion(nombre, telefono, direccion, mensaje, ancho=40,
+                          impresora=None, imprimir_automatico=None,
+                          abrir_cajon_automatico=None, cortar_papel=None):
+    """Actualiza los datos de configuración de la tienda y periféricos."""
     conn = conectar_db()
     cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM configuracion WHERE id = 1")
+    actual = dict(cursor.fetchone() or {})
+
+    imp_final = impresora.strip() if impresora is not None else actual.get('impresora', '')
+    imp_auto = int(imprimir_automatico) if imprimir_automatico is not None else actual.get('imprimir_automatico', 1)
+    cajon_auto = int(abrir_cajon_automatico) if abrir_cajon_automatico is not None else actual.get('abrir_cajon_automatico', 1)
+    corte_auto = int(cortar_papel) if cortar_papel is not None else actual.get('cortar_papel', 1)
+
     cursor.execute("""
     UPDATE configuracion
-    SET nombre_tienda = ?, telefono = ?, direccion = ?, mensaje_ticket = ?, ancho_ticket = ?
+    SET nombre_tienda = ?, telefono = ?, direccion = ?, mensaje_ticket = ?, ancho_ticket = ?,
+        impresora = ?, imprimir_automatico = ?, abrir_cajon_automatico = ?, cortar_papel = ?
     WHERE id = 1
-    """, (nombre.strip(), telefono.strip(), direccion.strip(), mensaje.strip(), ancho))
+    """, (nombre.strip(), telefono.strip(), direccion.strip(), mensaje.strip(), int(ancho),
+          imp_final, imp_auto, cajon_auto, corte_auto))
     conn.commit()
     conn.close()
 
@@ -645,6 +684,40 @@ def obtener_detalle_venta(id_venta):
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
     return rows
+
+def obtener_venta_por_id(id_venta):
+    """Obtiene los datos generales de una venta por su ID."""
+    conn = conectar_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM ventas WHERE id = ?", (id_venta,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def preparar_datos_ticket_desde_venta(id_venta):
+    """Reconstruye el formato de ticket para reimpresión a partir de un ID de venta."""
+    venta = obtener_venta_por_id(id_venta)
+    if not venta:
+        return None
+    detalles = obtener_detalle_venta(id_venta)
+    articulos = []
+    for d in detalles:
+        articulos.append({
+            'nombre': d['nombre_producto'],
+            'cantidad': d['cantidad'],
+            'precio': d['precio_unitario'],
+            'subtotal': d['subtotal']
+        })
+    return {
+        'id_venta': venta['id'],
+        'folio': venta['folio'],
+        'fecha_hora': venta['fecha_hora'],
+        'total': venta['total'],
+        'pago_con': venta['pago_con'],
+        'cambio': venta['cambio'],
+        'metodo_pago': venta.get('metodo_pago', 'Efectivo'),
+        'articulos': articulos
+    }
 
 # ==========================================================
 # RESPALDO Y RESTAURACIÓN (ESENCIAL PARA MÁQUINAS SIN INTERNET)

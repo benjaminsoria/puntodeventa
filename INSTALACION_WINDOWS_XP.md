@@ -49,10 +49,11 @@ Simplemente haz **doble clic en el icono del Punto de Venta en el Escritorio**.
 
 ---
 
-## 🔌 Requisitos Mínimos de Hardware
+## 🔌 Requisitos y Conexión de Periféricos
 - **Sistema Operativo:** Windows XP SP3 (también compatible con Windows 7, 8, 10 y 11).
 - **Procesador:** Pentium III / Pentium 4 / Celeron o superior.
 - **Memoria RAM:** 256 MB o más.
 - **Espacio en Disco:** Menos de 50 MB en total.
 - **Lector de Código de Barras (Opcional):** Cualquier lector USB tipo pistola (Plug & Play, no requiere drivers especiales).
-- **Impresora de Tickets (Opcional):** Compatible con cualquier impresora térmica (58mm u 80mm) o guardado directo en archivo de texto.
+- **Impresora de Tickets:** Compatible con cualquier impresora térmica (58mm u 80mm por USB, LPT o COM). Se comunica mediante el Spooler nativo de Windows XP sin requerir controladores especiales ni paquetes externos.
+- **Cajón de Dinero:** Se conecta mediante cable RJ11 (tipo telefónico) directamente a la parte trasera de la impresora de tickets. El sistema envía el pulso ESC/POS para abrirlo de forma automática o con la tecla **F8**.

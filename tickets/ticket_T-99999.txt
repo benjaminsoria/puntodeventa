@@ -2,7 +2,7 @@
     Av. Principal #123, Col. Centro     
            Tel: 55-1234-5678            
 ========================================
-FOLIO: T-99999         CAJA: 1
+FOLIO: T-99999      CAJA: 1
 FECHA: 2026-11-05 10:00:00
 ----------------------------------------
 CANT  PRODUCTO           P.UNIT    TOTAL
@@ -16,5 +16,3 @@ CANT  PRODUCTO           P.UNIT    TOTAL
                SU CAMBIO: $        24.50
 ========================================
  ¡Gracias por su compra! Vuelva pronto. 
-
-
