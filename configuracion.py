@@ -54,7 +54,7 @@ class FrameConfiguracion(tk.Frame):
         entry_msg = tk.Entry(frame_izq, textvariable=self.var_mensaje, font=("Arial", 11), width=35)
         entry_msg.pack(fill=tk.X, pady=(0, 15))
 
-        btn_guardar_datos = tk.Button(frame_izq, text="💾 Guardar Cambios de la Tienda", font=("Arial", 11, "bold"), bg="#38A169", fg="white", pady=8,
+        btn_guardar_datos = tk.Button(frame_izq, text="Guardar Cambios de la Tienda", font=("Arial", 11, "bold"), bg="#38A169", fg="white", pady=8,
                                       command=self.guardar_datos)
         btn_guardar_datos.pack(fill=tk.X)
 
@@ -65,7 +65,7 @@ class FrameConfiguracion(tk.Frame):
         tk.Label(frame_der, text="¡Proteja la información de su negocio!\nAl no tener internet, es muy importante copiar periódicamente los datos a una memoria USB (Pendrive).",
                  font=("Arial", 9), bg="#F7FAFC", fg="#4A5568", justify="left").pack(anchor="w", pady=(0, 10))
 
-        btn_respaldo_usb = tk.Button(frame_der, text="💾 COPIAR RESPALDO A MEMORIA USB", font=("Arial", 12, "bold"), bg="#3182CE", fg="white", pady=10,
+        btn_respaldo_usb = tk.Button(frame_der, text="COPIAR RESPALDO A MEMORIA USB", font=("Arial", 12, "bold"), bg="#3182CE", fg="white", pady=10,
                                      command=self.hacer_respaldo_usb)
         btn_respaldo_usb.pack(fill=tk.X, pady=(0, 10))
 
@@ -84,7 +84,7 @@ class FrameConfiguracion(tk.Frame):
         self.tree_respaldos.column("tamano", width=80, anchor="e")
         self.tree_respaldos.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
 
-        btn_restaurar = tk.Button(frame_der, text="🔄 Restaurar Sistema desde una Copia", font=("Arial", 10, "bold"), bg="#FED7D7", fg="#9B2C2C", pady=6,
+        btn_restaurar = tk.Button(frame_der, text="Restaurar Sistema desde una Copia", font=("Arial", 10, "bold"), bg="#FED7D7", fg="#9B2C2C", pady=6,
                                   command=self.restaurar_copia)
         btn_restaurar.pack(fill=tk.X)
 

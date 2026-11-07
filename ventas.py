@@ -111,11 +111,11 @@ class DialogoCobro(object):
         frame_acciones = tk.Frame(frame_principal, bg="#F0F4F8")
         frame_acciones.pack(fill=tk.X, pady=(10, 0))
 
-        self.btn_confirmar = tk.Button(frame_acciones, text="✓ CONFIRMAR COBRO (Enter)", font=("Arial", 14, "bold"), bg="#38A169", fg="white", pady=8,
+        self.btn_confirmar = tk.Button(frame_acciones, text="CONFIRMAR COBRO (Enter)", font=("Arial", 14, "bold"), bg="#38A169", fg="white", pady=8,
                                        command=self.confirmar_cobro, state=tk.DISABLED)
         self.btn_confirmar.pack(fill=tk.X, pady=4)
 
-        btn_cancelar = tk.Button(frame_acciones, text="✕ Volver al Carrito (Esc)", font=("Arial", 11), bg="#E2E8F0", fg="#4A5568", pady=4,
+        btn_cancelar = tk.Button(frame_acciones, text="Volver al Carrito (Esc)", font=("Arial", 11), bg="#E2E8F0", fg="#4A5568", pady=4,
                                  command=self.top.destroy)
         btn_cancelar.pack(fill=tk.X)
 
@@ -274,7 +274,7 @@ class DialogoBuscarProducto(object):
         f_bot = tk.Frame(self.top, padx=10, pady=8)
         f_bot.pack(side=tk.BOTTOM, fill=tk.X)
 
-        btn_sel = tk.Button(f_bot, text="✓ Seleccionar Dulce (Enter)", font=("Arial", 11, "bold"), bg="#3182CE", fg="white",
+        btn_sel = tk.Button(f_bot, text="Seleccionar Dulce (Enter)", font=("Arial", 11, "bold"), bg="#3182CE", fg="white",
                             command=self.confirmar_seleccion)
         btn_sel.pack(side=tk.RIGHT, padx=5)
 
@@ -361,7 +361,7 @@ class FrameVentas(tk.Frame):
                                 command=self.procesar_busqueda)
         btn_agregar.pack(side=tk.LEFT, padx=10)
 
-        btn_buscar_catalogo = tk.Button(fila_busqueda, text="🔍 Buscar en Catálogo", font=("Arial", 10), bg="#E2E8F0", padx=8, pady=2,
+        btn_buscar_catalogo = tk.Button(fila_busqueda, text="Buscar en Catálogo", font=("Arial", 10), bg="#E2E8F0", padx=8, pady=2,
                                         command=self.abrir_buscador)
         btn_buscar_catalogo.pack(side=tk.LEFT, padx=5)
 
@@ -411,11 +411,11 @@ class FrameVentas(tk.Frame):
                               command=self.restar_uno_seleccionado)
         btn_menos.pack(side=tk.LEFT, padx=4)
 
-        btn_quitar = tk.Button(frame_acciones_carrito, text="🗑 Quitar Renglón", font=("Arial", 10), bg="#FED7D7", fg="#9B2C2C", padx=8, pady=4,
+        btn_quitar = tk.Button(frame_acciones_carrito, text="Quitar Renglón", font=("Arial", 10), bg="#FED7D7", fg="#9B2C2C", padx=8, pady=4,
                                command=self.quitar_renglon)
         btn_quitar.pack(side=tk.LEFT, padx=4)
 
-        btn_vaciar = tk.Button(frame_acciones_carrito, text="✕ Cancelar Venta / Limpiar Carrito", font=("Arial", 10), bg="#E2E8F0", fg="#4A5568", padx=8, pady=4,
+        btn_vaciar = tk.Button(frame_acciones_carrito, text="Cancelar Venta / Limpiar Carrito", font=("Arial", 10), bg="#E2E8F0", fg="#4A5568", padx=8, pady=4,
                                command=self.limpiar_carrito)
         btn_vaciar.pack(side=tk.LEFT, padx=15)
 
@@ -439,11 +439,11 @@ class FrameVentas(tk.Frame):
         self.lbl_cant_articulos.pack()
 
         # Botón Enorme de Cobro
-        self.btn_cobrar = tk.Button(frame_derecho, text="💳 COBRAR\n(Tecla F12)", font=("Arial", 16, "bold"), bg="#38A169", fg="white", pady=18,
+        self.btn_cobrar = tk.Button(frame_derecho, text="COBRAR\n(Tecla F12)", font=("Arial", 16, "bold"), bg="#38A169", fg="white", pady=18,
                                     cursor="hand2", command=self.iniciar_cobro)
         self.btn_cobrar.pack(fill=tk.X, pady=(20, 10))
 
-        lbl_ayuda = tk.Label(frame_derecho, text="Atajos rápidos:\n• F12: Abrir ventana de cobro\n• Enter: Agregar producto\n• Esc: Regresar a búsqueda",
+        lbl_ayuda = tk.Label(frame_derecho, text="Atajos rápidos:\n- F12: Abrir ventana de cobro\n- Enter: Agregar producto\n- Esc: Regresar a búsqueda",
                              font=("Arial", 9), justify="left", bg="#EDF2F7", fg="#718096")
         lbl_ayuda.pack(side=tk.BOTTOM, pady=5)
 

@@ -101,7 +101,7 @@ class DialogoProducto(object):
 
         # Favorito en botonera rápida
         self.var_favorito = tk.IntVar(value=0)
-        chk_fav = tk.Checkbutton(f, text="⭐ Marcar como Dulce Favorito (Acceso rápido en pantalla de venta)",
+        chk_fav = tk.Checkbutton(f, text="Marcar como Dulce Favorito (Acceso rápido en pantalla de venta)",
                                  variable=self.var_favorito, font=("Arial", 10), bg="#F7FAFC", fg="#2D3748")
         chk_fav.pack(pady=12, anchor="w")
 
@@ -109,7 +109,7 @@ class DialogoProducto(object):
         f_btn = tk.Frame(f, bg="#F7FAFC")
         f_btn.pack(fill=tk.X, pady=(10, 0))
 
-        btn_guardar = tk.Button(f_btn, text="💾 Guardar Producto (Enter)", font=("Arial", 11, "bold"), bg="#38A169", fg="white", pady=6,
+        btn_guardar = tk.Button(f_btn, text="Guardar Producto (Enter)", font=("Arial", 11, "bold"), bg="#38A169", fg="white", pady=6,
                                 command=self.guardar)
         btn_guardar.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
 
@@ -224,7 +224,7 @@ class DialogoEntradaStock(object):
         self.entry_cant.focus_set()
         self.entry_cant.select_range(0, tk.END)
 
-        btn_ok = tk.Button(f, text="✓ Sumar al Inventario (Enter)", font=("Arial", 12, "bold"), bg="#38A169", fg="white", pady=6,
+        btn_ok = tk.Button(f, text="Sumar al Inventario (Enter)", font=("Arial", 12, "bold"), bg="#38A169", fg="white", pady=6,
                            command=self.confirmar)
         btn_ok.pack(fill=tk.X, pady=4)
 
@@ -285,7 +285,7 @@ class FrameInventario(tk.Frame):
         self.cb_filtro_cat.bind("<<ComboboxSelected>>", lambda e: self.cargar_datos())
 
         self.var_solo_bajos = tk.BooleanVar(value=False)
-        chk_bajos = tk.Checkbutton(frame_filtros, text="⚠ Ver solo dulces por agotarse", variable=self.var_solo_bajos,
+        chk_bajos = tk.Checkbutton(frame_filtros, text="Ver solo dulces por agotarse", variable=self.var_solo_bajos,
                                    font=("Arial", 10, "bold"), bg="#EDF2F7", fg="#C53030", command=self.cargar_datos)
         chk_bajos.pack(side=tk.LEFT, padx=15)
 
@@ -338,19 +338,19 @@ class FrameInventario(tk.Frame):
                               command=self.nuevo_producto)
         btn_nuevo.pack(side=tk.LEFT, padx=4)
 
-        btn_editar = tk.Button(frame_acciones, text="✏ Modificar Seleccionado", font=("Arial", 10, "bold"), bg="#3182CE", fg="white", padx=10, pady=4,
+        btn_editar = tk.Button(frame_acciones, text="Modificar Seleccionado", font=("Arial", 10, "bold"), bg="#3182CE", fg="white", padx=10, pady=4,
                                command=self.editar_producto)
         btn_editar.pack(side=tk.LEFT, padx=4)
 
-        btn_entrada = tk.Button(frame_acciones, text="📦 + Agregar Mercancía (Stock)", font=("Arial", 10, "bold"), bg="#DD6B20", fg="white", padx=10, pady=4,
+        btn_entrada = tk.Button(frame_acciones, text="+ Agregar Mercancía (Stock)", font=("Arial", 10, "bold"), bg="#DD6B20", fg="white", padx=10, pady=4,
                                 command=self.entrada_mercancia)
         btn_entrada.pack(side=tk.LEFT, padx=8)
 
-        btn_fav = tk.Button(frame_acciones, text="⭐ Alternar Favorito", font=("Arial", 10), bg="#E2E8F0", padx=8, pady=4,
+        btn_fav = tk.Button(frame_acciones, text="Alternar Favorito", font=("Arial", 10), bg="#E2E8F0", padx=8, pady=4,
                             command=self.alternar_favorito)
         btn_fav.pack(side=tk.LEFT, padx=4)
 
-        btn_eliminar = tk.Button(frame_acciones, text="🗑 Eliminar / Desactivar", font=("Arial", 10), bg="#FED7D7", fg="#9B2C2C", padx=8, pady=4,
+        btn_eliminar = tk.Button(frame_acciones, text="Eliminar / Desactivar", font=("Arial", 10), bg="#FED7D7", fg="#9B2C2C", padx=8, pady=4,
                                  command=self.eliminar_producto)
         btn_eliminar.pack(side=tk.RIGHT, padx=4)
 
@@ -381,7 +381,7 @@ class FrameInventario(tk.Frame):
 
             str_stock = "{:.0f}".format(stock) if stock.is_integer() else "{:.2f}".format(stock)
             str_min = "{:.0f}".format(stock_min) if stock_min.is_integer() else "{:.2f}".format(stock_min)
-            str_fav = "⭐ Sí" if p['es_favorito'] == 1 else "No"
+            str_fav = "Sí" if p['es_favorito'] == 1 else "No"
 
             etiqueta = ""
             if stock <= 0:

@@ -71,7 +71,7 @@ class DialogoMovimientoCaja(object):
         f_btn = tk.Frame(f, bg="#F7FAFC")
         f_btn.pack(fill=tk.X, pady=(15, 0))
 
-        btn_guardar = tk.Button(f_btn, text="✓ Registrar Movimiento (Enter)", font=("Arial", 11, "bold"),
+        btn_guardar = tk.Button(f_btn, text="Registrar Movimiento (Enter)", font=("Arial", 11, "bold"),
                                 bg=("#38A169" if self.tipo == 'ENTRADA' else "#E53E3E"), fg="white", pady=6,
                                 command=self.guardar)
         btn_guardar.pack(fill=tk.X, pady=4)
@@ -180,7 +180,7 @@ class DialogoCorteCaja(object):
         entry_obs.pack(fill=tk.X, pady=(2, 10))
 
         # Botones
-        btn_cerrar = tk.Button(f, text="🔒 FINALIZAR CORTE Y CERRAR TURNO", font=("Arial", 12, "bold"), bg="#DD6B20", fg="white", pady=8,
+        btn_cerrar = tk.Button(f, text="FINALIZAR CORTE Y CERRAR TURNO", font=("Arial", 12, "bold"), bg="#DD6B20", fg="white", pady=8,
                                command=self.confirmar_cierre)
         btn_cerrar.pack(fill=tk.X, pady=4)
 
@@ -277,10 +277,10 @@ class FrameCaja(tk.Frame):
         self.lbl_desglose_ganancia = self._crear_fila_resumen(f_detalles, "Ganancia Estimada:", "$0.00", color_val="#2B6CB0", negrita=True)
 
         # Botones de Acción de Caja
-        self.btn_abrir_turno = tk.Button(frame_izq, text="🔓 ABRIR NUEVO TURNO DE CAJA", font=("Arial", 12, "bold"), bg="#38A169", fg="white", pady=10,
+        self.btn_abrir_turno = tk.Button(frame_izq, text="ABRIR NUEVO TURNO DE CAJA", font=("Arial", 12, "bold"), bg="#38A169", fg="white", pady=10,
                                          command=self.abrir_turno_dialogo)
 
-        self.btn_corte = tk.Button(frame_izq, text="📊 REALIZAR CORTE Y CERRAR TURNO", font=("Arial", 12, "bold"), bg="#DD6B20", fg="white", pady=10,
+        self.btn_corte = tk.Button(frame_izq, text="REALIZAR CORTE Y CERRAR TURNO", font=("Arial", 12, "bold"), bg="#DD6B20", fg="white", pady=10,
                                    command=self.iniciar_corte)
 
         self.btn_entrada = tk.Button(frame_izq, text="(+) Entrada de Dinero", font=("Arial", 10, "bold"), bg="#E2E8F0", pady=6,
@@ -423,7 +423,7 @@ class FrameCaja(tk.Frame):
             else:
                 messagebox.showerror("Error", id_nuevo, parent=win_abrir)
 
-        btn_ok = tk.Button(f, text="✓ Abrir Caja Ahora (Enter)", font=("Arial", 11, "bold"), bg="#38A169", fg="white", pady=6,
+        btn_ok = tk.Button(f, text="Abrir Caja Ahora (Enter)", font=("Arial", 11, "bold"), bg="#38A169", fg="white", pady=6,
                            command=confirmar_apertura)
         btn_ok.pack(fill=tk.X, pady=4)
 

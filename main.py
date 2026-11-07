@@ -81,7 +81,7 @@ class AppPuntoDeVenta(tk.Tk):
 
         # Nombre de la dulcería
         cfg = database.obtener_configuracion()
-        self.lbl_nombre_tienda = tk.Label(self.frame_top, text="🍬  " + cfg.get('nombre_tienda', 'DULCERÍA').upper(),
+        self.lbl_nombre_tienda = tk.Label(self.frame_top, text=cfg.get('nombre_tienda', 'DULCERÍA').upper(),
                                           font=("Arial", 16, "bold"), fg="#FFFFFF", bg="#1B365D")
         self.lbl_nombre_tienda.pack(side=tk.LEFT, pady=2)
 
@@ -99,23 +99,23 @@ class AppPuntoDeVenta(tk.Tk):
 
         # 1. Pantalla de Ventas (F1)
         self.pantalla_ventas = FrameVentas(self.notebook, self)
-        self.notebook.add(self.pantalla_ventas, text=" 🛒  VENTA (F1) ")
+        self.notebook.add(self.pantalla_ventas, text=" VENTA (F1) ")
 
         # 2. Pantalla de Inventario (F2)
         self.pantalla_inventario = FrameInventario(self.notebook, self)
-        self.notebook.add(self.pantalla_inventario, text=" 📦  INVENTARIO (F2) ")
+        self.notebook.add(self.pantalla_inventario, text=" INVENTARIO (F2) ")
 
         # 3. Pantalla de Corte de Caja (F3)
         self.pantalla_caja = FrameCaja(self.notebook, self)
-        self.notebook.add(self.pantalla_caja, text=" 💵  CORTE DE CAJA (F3) ")
+        self.notebook.add(self.pantalla_caja, text=" CORTE DE CAJA (F3) ")
 
         # 4. Pantalla de Reportes e Historial (F4)
         self.pantalla_reportes = FrameReportes(self.notebook, self)
-        self.notebook.add(self.pantalla_reportes, text=" 📊  HISTORIAL (F4) ")
+        self.notebook.add(self.pantalla_reportes, text=" HISTORIAL (F4) ")
 
         # 5. Pantalla de Ajustes y Respaldos (F5)
         self.pantalla_config = FrameConfiguracion(self.notebook, self)
-        self.notebook.add(self.pantalla_config, text=" ⚙️  AJUSTES / USB (F5) ")
+        self.notebook.add(self.pantalla_config, text=" AJUSTES / USB (F5) ")
 
         # Evento al cambiar de pestaña
         self.notebook.bind("<<NotebookTabChanged>>", self.al_cambiar_pestana)
@@ -129,7 +129,7 @@ class AppPuntoDeVenta(tk.Tk):
                               font=("Arial", 9, "bold"), fg="#E2E8F0", bg="#2D3748")
         lbl_atajos.pack(side=tk.LEFT)
 
-        lbl_version = tk.Label(self.frame_bottom, text="Sistema Offline • Windows XP Edition", font=("Arial", 9), fg="#A0AEC0", bg="#2D3748")
+        lbl_version = tk.Label(self.frame_bottom, text="Sistema Offline | Windows XP Edition", font=("Arial", 9), fg="#A0AEC0", bg="#2D3748")
         lbl_version.pack(side=tk.RIGHT)
 
     def configurar_atajos(self):
@@ -160,7 +160,7 @@ class AppPuntoDeVenta(tk.Tk):
 
     def actualizar_titulo_tienda(self):
         cfg = database.obtener_configuracion()
-        self.lbl_nombre_tienda.config(text="🍬  " + cfg.get('nombre_tienda', 'DULCERÍA').upper())
+        self.lbl_nombre_tienda.config(text=cfg.get('nombre_tienda', 'DULCERÍA').upper())
 
     def actualizar_reloj(self):
         ahora = datetime.datetime.now().strftime("%d/%m/%Y  %I:%M:%S %p")

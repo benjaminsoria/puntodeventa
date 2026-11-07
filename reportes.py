@@ -42,7 +42,7 @@ class FrameReportes(tk.Frame):
         btn_todas = tk.Button(frame_filtros, text="Ver Todas", font=("Arial", 9), bg="#E2E8F0", command=self.filtrar_todas)
         btn_todas.pack(side=tk.LEFT, padx=3)
 
-        btn_buscar = tk.Button(frame_filtros, text="🔍 Aplicar Filtro", font=("Arial", 10, "bold"), bg="#3182CE", fg="white",
+        btn_buscar = tk.Button(frame_filtros, text="Aplicar Filtro", font=("Arial", 10, "bold"), bg="#3182CE", fg="white",
                                command=self.cargar_ventas)
         btn_buscar.pack(side=tk.LEFT, padx=8)
 
@@ -110,12 +110,12 @@ class FrameReportes(tk.Frame):
         frame_acciones = tk.Frame(self, bg="#EDF2F7", padx=10, pady=8, relief=tk.RIDGE, bd=1)
         frame_acciones.pack(fill=tk.X, padx=10, pady=(5, 10))
 
-        btn_cancelar_venta = tk.Button(frame_acciones, text="✕ Cancelar Venta Seleccionada (Devuelve Productos a Stock)",
+        btn_cancelar_venta = tk.Button(frame_acciones, text="Cancelar Venta Seleccionada (Devuelve Productos a Stock)",
                                        font=("Arial", 10, "bold"), bg="#FED7D7", fg="#9B2C2C", padx=10, pady=4,
                                        command=self.cancelar_venta_seleccionada)
         btn_cancelar_venta.pack(side=tk.LEFT, padx=5)
 
-        btn_refrescar = tk.Button(frame_acciones, text="🔄 Actualizar", font=("Arial", 10), bg="#E2E8F0", padx=10, pady=4,
+        btn_refrescar = tk.Button(frame_acciones, text="Actualizar", font=("Arial", 10), bg="#E2E8F0", padx=10, pady=4,
                                   command=self.cargar_ventas)
         btn_refrescar.pack(side=tk.RIGHT, padx=5)
 

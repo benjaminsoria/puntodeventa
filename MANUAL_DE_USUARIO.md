@@ -6,15 +6,15 @@
 
 ## 📌 Pestañas Principales (Presione las teclas F1 a F5)
 En la parte superior de la pantalla encontrará las 5 secciones del sistema:
-- **[F1] 🛒 VENTA:** Para registrar lo que compran los clientes y cobrar.
-- **[F2] 📦 INVENTARIO:** Para ver sus productos, agregar dulces nuevos y reponer piezas.
-- **[F3] 💵 CORTE DE CAJA:** Para abrir la caja, registrar pagos de gastos y hacer el corte del día.
-- **[F4] 📊 HISTORIAL:** Para ver las ventas del día o reimprimir/cancelar una venta.
-- **[F5] ⚙️ AJUSTES / USB:** Para cambiar el nombre de la tienda y hacer respaldos a la memoria USB.
+- **[F1] VENTA:** Para registrar lo que compran los clientes y cobrar.
+- **[F2] INVENTARIO:** Para ver sus productos, agregar dulces nuevos y reponer piezas.
+- **[F3] CORTE DE CAJA:** Para abrir la caja, registrar pagos de gastos y hacer el corte del día.
+- **[F4] HISTORIAL:** Para ver las ventas del día o reimprimir/cancelar una venta.
+- **[F5] AJUSTES / USB:** Para cambiar el nombre de la tienda y hacer respaldos a la memoria USB.
 
 ---
 
-## 🛒 1. Cómo Realizar una Venta
+## 1. Cómo Realizar una Venta
 
 ### Forma Rápida 1: Con Lector de Código de Barras (Pistola)
 1. Apunte el lector al código de barras del dulce.
@@ -32,23 +32,23 @@ En la parte superior de la pantalla encontrará las 5 secciones del sistema:
 ### Modificar Cantidades en el Carrito:
 - **Para vender varias piezas:** En el campo `Cant:` escriba la cantidad antes de escanear (ej. `5`) y luego escanee o seleccione el dulce.
 - **Botones rápidos:** Debajo de la tabla puede usar los botones `[ +1 Pieza ]` o `[ -1 Pieza ]` sobre el dulce seleccionado.
-- **Eliminar un producto del carrito:** Seleccione el renglón y dé clic en `🗑 Quitar Renglón`.
+- **Eliminar un producto del carrito:** Seleccione el renglón y dé clic en `Quitar Renglón`.
 
 ---
 
-## 💳 2. Cómo Cobrar y Calcular el Cambio
+## 2. Cómo Cobrar y Calcular el Cambio
 
-1. Cuando termine de agregar los dulces, presione la tecla **F12** o dé clic en el botón verde grande **💳 COBRAR**.
+1. Cuando termine de agregar los dulces, presione la tecla **F12** o dé clic en el botón verde grande **COBRAR**.
 2. Aparecerá una ventana grande:
    - Verá el **TOTAL A COBRAR** en números gigantes.
    - Haga clic en el botón del billete con el que le pagan (`$20`, `$50`, `$100`, `$200`, `$500`) o escriba la cantidad en el recuadro "Paga con:".
    - **El sistema calculará automáticamente el CAMBIO A ENTREGAR en letras grandes y color verde.**
-3. Presione la tecla **Enter** o clic en **✓ CONFIRMAR COBRO**.
+3. Presione la tecla **Enter** o clic en **CONFIRMAR COBRO**.
 4. ¡Listo! La venta se guardará y la pantalla quedará lista para atender al siguiente cliente.
 
 ---
 
-## 📦 3. Cómo Administrar el Inventario y Dulces
+## 3. Cómo Administrar el Inventario y Dulces
 
 Haga clic en la pestaña **[F2] INVENTARIO**.
 
@@ -58,24 +58,24 @@ Haga clic en la pestaña **[F2] INVENTARIO**.
 
 ### Cuando llegan cajas nuevas (Entrada Rápida):
 1. Seleccione el dulce en la lista.
-2. Haga clic en el botón naranja **`📦 + Agregar Mercancía (Stock)`**.
+2. Haga clic en el botón naranja **`+ Agregar Mercancía (Stock)`**.
 3. Escriba cuántas piezas llegaron (por ejemplo: `24` o `50`) y presione **Enter**.
 4. ¡El stock se sumará al instante sin tener que editar precios ni códigos!
 
 ### Registrar un dulce nuevo:
 1. Haga clic en **`+ Nuevo Dulce`**.
 2. Escanee o escriba su código, escriba el nombre, el precio que le costó a usted y el precio al que lo vende al público.
-3. Si es un dulce que se vende mucho, marque la casilla **"⭐ Marcar como Dulce Favorito"** para que aparezca en los botones rápidos de venta.
+3. Si es un dulce que se vende mucho, marque la casilla **"Marcar como Dulce Favorito"** para que aparezca en los botones rápidos de venta.
 4. Haga clic en **Guardar**.
 
 ---
 
-## 💵 4. Corte de Caja y Cierre del Día
+## 4. Corte de Caja y Cierre del Día
 
 Haga clic en la pestaña **[F3] CORTE DE CAJA**.
 
 ### Al abrir la tienda en la mañana:
-- Si la caja está cerrada, dé clic en **`🔓 ABRIR NUEVO TURNO DE CAJA`**.
+- Si la caja está cerrada, dé clic en **`ABRIR NUEVO TURNO DE CAJA`**.
 - Ingrese su dinero inicial para dar cambio (ej. `$200.00`) y presione **Enter**.
 
 ### Registrar pagos o gastos menores durante el día:
@@ -83,7 +83,7 @@ Haga clic en la pestaña **[F3] CORTE DE CAJA**.
 - **Si mete morralla extra:** Dé clic en **`(+) Entrada de Dinero`**.
 
 ### En la noche al cerrar la dulcería:
-1. Haga clic en **`📊 REALIZAR CORTE Y CERRAR TURNO`**.
+1. Haga clic en **`REALIZAR CORTE Y CERRAR TURNO`**.
 2. La pantalla le mostrará el resumen exacto:
    - Fondo con el que empezó
    - (+) Total de ventas en efectivo
@@ -96,13 +96,13 @@ Haga clic en la pestaña **[F3] CORTE DE CAJA**.
 
 ---
 
-## 💾 5. Respaldo a Memoria USB (¡Muy Importante!)
+## 5. Respaldo a Memoria USB (¡Muy Importante!)
 
 Al ser una computadora sin internet, hacer una copia de seguridad a su memoria USB evita que pierda su información si la computadora se llega a descomponer o apagar por un corte de luz.
 
 1. Conecte su memoria USB a la computadora.
 2. Vaya a la pestaña **[F5] AJUSTES / USB**.
-3. Haga clic en el botón azul: **`💾 COPIAR RESPALDO A MEMORIA USB`**.
+3. Haga clic en el botón azul: **`COPIAR RESPALDO A MEMORIA USB`**.
 4. Seleccione su memoria USB (ejemplo: Disco `E:\` o `F:\`) y dé clic en **Aceptar**.
 5. ¡Listo! En 2 segundos tendrá una copia de todos sus productos y ventas segura en su memoria.
    *(Se recomienda hacerlo una vez por semana o al final de cada quincena).*
