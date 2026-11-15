@@ -127,6 +127,7 @@ En la pestaña **[F5] AJUSTES / USB** encontrará la sección central **Impresor
 3. Haga clic en **`💵 Probar Abrir Cajón`** para verificar que el cajón se abra de inmediato.
 4. Elija el ancho de su papel:
    - `58 mm (32 car.)`: Para impresoras térmicas pequeñas estándar de 58 milímetros.
+   - `70 mm (36 car.)`: Para impresoras térmicas medianas de 70 milímetros.
    - `80 mm (40 car.)`: Para impresoras térmicas grandes de 80 milímetros.
 5. Deje marcadas las casillas automáticas si desea que imprima y abra el cajón en cada venta.
 6. Haga clic en **`💾 Guardar Cambios de Impresora`**.

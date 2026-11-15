@@ -113,7 +113,9 @@ class FrameConfiguracion(tk.Frame):
 
         self.var_ancho = tk.StringVar(value="40")
         rb_58 = tk.Radiobutton(f_ancho, text="58 mm (32 car.)", variable=self.var_ancho, value="32", font=("Arial", 9), bg="#F7FAFC")
-        rb_58.pack(side=tk.LEFT, padx=(0, 10))
+        rb_58.pack(side=tk.LEFT, padx=(0, 6))
+        rb_70 = tk.Radiobutton(f_ancho, text="70 mm (36 car.)", variable=self.var_ancho, value="36", font=("Arial", 9), bg="#F7FAFC")
+        rb_70.pack(side=tk.LEFT, padx=(0, 6))
         rb_80 = tk.Radiobutton(f_ancho, text="80 mm (40 car.)", variable=self.var_ancho, value="40", font=("Arial", 9), bg="#F7FAFC")
         rb_80.pack(side=tk.LEFT)
 
@@ -183,7 +185,8 @@ class FrameConfiguracion(tk.Frame):
         self.var_imp_auto.set(bool(int(cfg.get('imprimir_automatico', 1))))
         self.var_cajon_auto.set(bool(int(cfg.get('abrir_cajon_automatico', 1))))
         self.var_corte_papel.set(bool(int(cfg.get('cortar_papel', 1))))
-        self.var_ancho.set(str(cfg.get('ancho_ticket', 40)))
+        ancho_val = ticket.resolver_ancho_ticket(cfg.get('ancho_ticket', 40))
+        self.var_ancho.set(str(ancho_val))
 
     def guardar_datos(self):
         nom = self.var_nombre.get().strip()
@@ -200,8 +203,8 @@ class FrameConfiguracion(tk.Frame):
             imp_sel = ""
 
         try:
-            ancho = int(self.var_ancho.get())
-        except ValueError:
+            ancho = ticket.resolver_ancho_ticket(self.var_ancho.get())
+        except (ValueError, TypeError):
             ancho = 40
 
         imp_auto = 1 if self.var_imp_auto.get() else 0
@@ -226,8 +229,8 @@ class FrameConfiguracion(tk.Frame):
             imp_sel = ""
 
         try:
-            ancho = int(self.var_ancho.get())
-        except ValueError:
+            ancho = ticket.resolver_ancho_ticket(self.var_ancho.get())
+        except (ValueError, TypeError):
             ancho = 40
 
         exito, msg = ticket.probar_impresion(imp_sel, ancho)

@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 Módulo de Formateo e Impresión de Tickets y Apertura de Cajón de Dinero.
-Compatible con impresoras térmicas (58mm / 80mm), puertos USB, LPT, COM y Spooler de Windows.
+Compatible con impresoras térmicas (58mm / 70mm / 80mm), puertos USB, LPT, COM y Spooler de Windows.
 Diseñado específicamente para Windows XP SP3, 7, 8, 10 y 11 usando únicamente la librería estándar de Python.
 """
 
 import os
 import sys
 import datetime
+import textwrap
 
 # Importación segura de ctypes y winreg para Windows XP+
 try:
@@ -50,6 +51,56 @@ else:
 
 
 # ==========================================================
+# CONFIGURACIÓN Y CONSTANTES DE ANCHO DE IMPRESORA TÉRMICA
+# ==========================================================
+ANCHO_58MM = 32   # Columnas estándar para impresora térmica compacta de 58 mm
+ANCHO_70MM = 36   # Columnas estándar para impresora térmica mediana de 70 mm
+ANCHO_80MM = 40   # Columnas estándar para impresora térmica grande de 80 mm (compatible 40 a 48)
+
+OPCIONES_ANCHO = (
+    (ANCHO_58MM, "58 mm (32 car.)"),
+    (ANCHO_70MM, "70 mm (36 car.)"),
+    (ANCHO_80MM, "80 mm (40 car.)"),
+)
+
+def obtener_opciones_ancho():
+    """Retorna una lista de tuplas (columnas, etiqueta) con los anchos térmicos soportados."""
+    return list(OPCIONES_ANCHO)
+
+def resolver_ancho_ticket(ancho_configurado):
+    """
+    Normaliza el ancho del ticket al número de columnas correspondiente.
+    Soporta la especificación en milímetros (58, 70, 80) o en columnas (32, 36, 40, etc.).
+    """
+    if ancho_configurado is None:
+        return ANCHO_80MM
+    try:
+        if isinstance(ancho_configurado, str):
+            val_limpio = "".join([c for c in ancho_configurado if c.isdigit()])
+            val = int(val_limpio) if val_limpio else ANCHO_80MM
+        else:
+            val = int(ancho_configurado)
+    except (ValueError, TypeError):
+        return ANCHO_80MM
+
+    # Si se especificó en milímetros:
+    if val in (58, 57):
+        return ANCHO_58MM
+    elif val in (70, 69, 72):
+        return ANCHO_70MM
+    elif val in (80, 76):
+        return ANCHO_80MM
+
+    # Si ya se especificó en número de columnas:
+    if val <= 33:
+        return ANCHO_58MM
+    elif val <= 37:
+        return ANCHO_70MM
+    else:
+        return val
+
+
+# ==========================================================
 # UTILIDADES DE TEXTO Y FORMATEO
 # ==========================================================
 
@@ -57,7 +108,7 @@ def centrar_texto(texto, ancho):
     """Centra una línea de texto según el ancho especificado."""
     return texto.center(ancho)
 
-def linea_separadora(caracter="=", ancho=40):
+def linea_separadora(caracter="=", ancho=ANCHO_80MM):
     """Genera una línea divisoria."""
     return caracter * ancho
 
@@ -77,21 +128,29 @@ def codificar_para_impresora(texto):
             except Exception:
                 return texto.encode('ascii', errors='replace')
 
-def generar_texto_ticket(datos_venta, config):
+def generar_texto_ticket(datos_venta, config=None):
     """
-    Genera el formato en texto plano para un ticket de compra adaptado a 58mm (32 cols) u 80mm (40 cols).
+    Genera el formato en texto plano para un ticket de compra adaptado a:
+    - 58mm (32 columnas)
+    - 70mm (36 columnas)
+    - 80mm (40 a 48 columnas)
     datos_venta: dict con 'folio', 'fecha_hora', 'articulos', 'total', 'pago_con', 'cambio', 'metodo_pago'
     config: dict con 'nombre_tienda', 'direccion', 'telefono', 'mensaje_ticket', 'ancho_ticket'
     """
-    ancho = int(config.get('ancho_ticket', 40))
+    if config is None:
+        config = {}
+
+    ancho = resolver_ancho_ticket(config.get('ancho_ticket', ANCHO_80MM))
     lineas = []
 
     # Encabezado
-    nombre_tienda = config.get('nombre_tienda', 'DULCERIA')
-    lineas.append(centrar_texto(nombre_tienda.upper(), ancho))
-    if config.get('direccion'):
-        lineas.append(centrar_texto(config.get('direccion'), ancho))
-    if config.get('telefono'):
+    nombre_tienda = config.get('nombre_tienda', 'DULCERIA') if config else 'DULCERIA'
+    for nom_linea in textwrap.wrap(nombre_tienda.upper(), width=ancho) or [nombre_tienda.upper()]:
+        lineas.append(centrar_texto(nom_linea, ancho))
+    if config and config.get('direccion'):
+        for dir_linea in textwrap.wrap(config.get('direccion'), width=ancho):
+            lineas.append(centrar_texto(dir_linea, ancho))
+    if config and config.get('telefono'):
         lineas.append(centrar_texto("Tel: " + config.get('telefono'), ancho))
 
     lineas.append(linea_separadora("=", ancho))
@@ -126,6 +185,29 @@ def generar_texto_ticket(datos_venta, config):
         lineas.append("{:<18} ${:>12.2f}".format("PAGO CON:", float(datos_venta.get('pago_con', 0.0))))
         lineas.append("{:<18} ${:>12.2f}".format("SU CAMBIO:", float(datos_venta.get('cambio', 0.0))))
         lineas.append(linea_separadora("=", ancho))
+    elif ancho <= 37:
+        # Formato intermedio para impresoras de 70mm (36 columnas exactas)
+        # CANT(4) PRODUCTO(16) P.UNIT(6) TOTAL(7) -> 4+1+16+1+6+1+7 = 36
+        lineas.append("{:<4} {:<16} {:>6} {:>7}".format("CANT", "PRODUCTO", "P.UNIT", "TOTAL"))
+        lineas.append(linea_separadora("-", ancho))
+
+        for art in datos_venta.get('articulos', []):
+            cant = art.get('cantidad', 1)
+            total_piezas += cant
+            nombre = art.get('nombre', 'Producto')
+            if len(nombre) > 16:
+                nombre = nombre[:14] + ".."
+            precio = float(art.get('precio', 0.0))
+            subtotal = float(art.get('subtotal', cant * precio))
+            str_cant = "{:.0f}".format(cant) if float(cant).is_integer() else "{:.1f}".format(cant)
+            lineas.append("{:<4} {:<16} {:>6.2f} {:>7.2f}".format(str_cant, nombre, precio, subtotal))
+
+        lineas.append(linea_separadora("=", ancho))
+        lineas.append("{:<20} {:>15}".format("TOTAL ARTICULOS:", "{:.0f}".format(total_piezas)))
+        lineas.append("{:<20} ${:>14.2f}".format("TOTAL A PAGAR:", float(datos_venta.get('total', 0.0))))
+        lineas.append("{:<20} ${:>14.2f}".format("PAGO CON:", float(datos_venta.get('pago_con', 0.0))))
+        lineas.append("{:<20} ${:>14.2f}".format("SU CAMBIO:", float(datos_venta.get('cambio', 0.0))))
+        lineas.append(linea_separadora("=", ancho))
     else:
         # Formato estándar para impresoras de 80mm (40 a 48 columnas)
         w_prod = max(15, ancho - 23)
@@ -156,9 +238,13 @@ def generar_texto_ticket(datos_venta, config):
         lineas.append(linea_separadora("=", ancho))
 
     # Pie de ticket
-    mensaje = config.get('mensaje_ticket', '¡Gracias por su preferencia!')
+    mensaje = config.get('mensaje_ticket', '¡Gracias por su preferencia!') if config else '¡Gracias por su preferencia!'
     for parte in mensaje.split("\n"):
-        lineas.append(centrar_texto(parte.strip(), ancho))
+        parte = parte.strip()
+        if not parte:
+            continue
+        for sublinea in textwrap.wrap(parte, width=ancho) or [parte]:
+            lineas.append(centrar_texto(sublinea, ancho))
 
     lineas.append("")
     return "\n".join(lineas)
@@ -189,15 +275,19 @@ def guardar_ticket_en_archivo(datos_venta, config):
         except Exception:
             return None
 
-def generar_texto_corte(resumen_caja, movimientos, config):
+def generar_texto_corte(resumen_caja, movimientos, config=None):
     """
-    Genera el formato en texto del Corte de Caja diario.
+    Genera el formato en texto del Corte de Caja diario adaptado a 58mm, 70mm u 80mm.
     """
-    ancho = int(config.get('ancho_ticket', 40))
+    if config is None:
+        config = {}
+
+    ancho = resolver_ancho_ticket(config.get('ancho_ticket', ANCHO_80MM))
     lineas = []
 
-    nombre_tienda = config.get('nombre_tienda', 'DULCERIA')
-    lineas.append(centrar_texto(nombre_tienda.upper(), ancho))
+    nombre_tienda = config.get('nombre_tienda', 'DULCERIA') if config else 'DULCERIA'
+    for nom_linea in textwrap.wrap(nombre_tienda.upper(), width=ancho) or [nombre_tienda.upper()]:
+        lineas.append(centrar_texto(nom_linea, ancho))
     lineas.append(centrar_texto("CORTE DE CAJA / CIERRE DE TURNO", ancho))
     lineas.append(linea_separadora("=", ancho))
 
@@ -209,12 +299,18 @@ def generar_texto_corte(resumen_caja, movimientos, config):
     if ancho <= 32:
         w_etiq = 18
         w_val = 12
+        fmt_fila = "{:<" + str(w_etiq) + "} ${:>" + str(w_val) + ".2f}"
+        fmt_fila_txt = "{:<" + str(w_etiq) + "}   {:>" + str(w_val) + "}"
+    elif ancho <= 37:
+        w_etiq = 20
+        w_val = 14
+        fmt_fila = "{:<" + str(w_etiq) + "} ${:>" + str(w_val) + ".2f}"
+        fmt_fila_txt = "{:<" + str(w_etiq) + "}   {:>" + str(w_val - 1) + "}"
     else:
         w_etiq = 25
         w_val = 12
-
-    fmt_fila = "{:<" + str(w_etiq) + "} ${:>" + str(w_val) + ".2f}"
-    fmt_fila_txt = "{:<" + str(w_etiq) + "}   {:>" + str(w_val) + "}"
+        fmt_fila = "{:<" + str(w_etiq) + "} ${:>" + str(w_val) + ".2f}"
+        fmt_fila_txt = "{:<" + str(w_etiq) + "}   {:>" + str(w_val) + "}"
 
     lineas.append(fmt_fila.format("(+) Fondo Inicial:", float(resumen_caja.get('monto_inicial', 0.0))))
     lineas.append(fmt_fila.format("(+) Ventas Efectivo:", float(resumen_caja.get('total_ventas', 0.0))))
@@ -222,9 +318,9 @@ def generar_texto_corte(resumen_caja, movimientos, config):
     lineas.append(fmt_fila.format("(+) Entradas:", float(resumen_caja.get('total_entradas', 0.0))))
     lineas.append(fmt_fila.format("(-) Salidas/Gastos:", float(resumen_caja.get('total_salidas', 0.0))))
     lineas.append(linea_separadora("=", ancho))
-    if ancho <= 32:
+    if ancho <= 37:
         lineas.append("TOTAL ESPERADO EN CAJA:")
-        lineas.append("{:>32}".format("${:.2f}".format(float(resumen_caja.get('dinero_esperado', 0.0)))))
+        lineas.append("{:>{w}}".format("${:.2f}".format(float(resumen_caja.get('dinero_esperado', 0.0))), w=ancho))
     else:
         lineas.append(fmt_fila.format("TOTAL ESPERADO EN CAJA:", float(resumen_caja.get('dinero_esperado', 0.0))))
     lineas.append(linea_separadora("=", ancho))
@@ -245,6 +341,16 @@ def generar_texto_corte(resumen_caja, movimientos, config):
                     motivo = motivo[:14] + ".."
                 monto = float(mov.get('monto', 0.0))
                 lineas.append("{:<4} {:<16} ${:>8.2f}".format(tipo, motivo, monto))
+        elif ancho <= 37:
+            lineas.append("{:<5} {:<19} {:>10}".format("TIPO", "MOTIVO", "MONTO"))
+            lineas.append(linea_separadora("-", ancho))
+            for mov in movimientos:
+                tipo = mov.get('tipo', 'MOV')[:5]
+                motivo = mov.get('motivo', '')
+                if len(motivo) > 19:
+                    motivo = motivo[:17] + ".."
+                monto = float(mov.get('monto', 0.0))
+                lineas.append("{:<5} {:<19} ${:>9.2f}".format(tipo, motivo, monto))
         else:
             lineas.append("{:<8} {:<20} {:>10}".format("TIPO", "MOTIVO", "MONTO"))
             lineas.append(linea_separadora("-", ancho))
@@ -257,7 +363,12 @@ def generar_texto_corte(resumen_caja, movimientos, config):
                 lineas.append("{:<8} {:<20} ${:>9.2f}".format(tipo, motivo, monto))
         lineas.append(linea_separadora("-", ancho))
 
-    lineas.append("\n\nFirma Responsable: __________________\n")
+    lineas.append("")
+    if ancho <= 32:
+        lineas.append("Firma: " + ("_" * max(8, ancho - 7)))
+    else:
+        lineas.append("Firma Responsable: " + ("_" * max(8, ancho - 19)))
+    lineas.append("")
     return "\n".join(lineas)
 
 def guardar_corte_en_archivo(resumen_caja, movimientos, config):
@@ -585,24 +696,37 @@ def imprimir_corte(resumen_caja, movimientos, config=None):
     turno_id = resumen_caja.get('id_turno', 1)
     return enviar_raw_a_impresora(impresora, datos_bytes, doc_name="Corte Turno #{}".format(turno_id))
 
-def probar_impresion(nombre_impresora=None, ancho=40):
+def probar_impresion(nombre_impresora=None, ancho=ANCHO_80MM):
     """
     Imprime un ticket de prueba pequeño para verificar el funcionamiento de la impresora.
+    Soporta anchos de 58mm (32 cols), 70mm (36 cols) y 80mm (40 cols).
     """
     impresora = resolver_nombre_impresora(nombre_impresora)
     if not impresora:
         return False, "No se ha seleccionado una impresora para probar."
 
-    ancho = int(ancho)
+    ancho = resolver_ancho_ticket(ancho)
     lineas = []
     lineas.append(centrar_texto("PRUEBA DE IMPRESORA POS", ancho))
     lineas.append(linea_separadora("=", ancho))
     lineas.append("Impresora: {}".format(impresora[:max(10, ancho - 12)]))
     lineas.append("Fecha/Hora: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-    lineas.append("Ancho: {} columnas".format(ancho))
+
+    etiqueta_papel = "80mm"
+    if ancho <= 32:
+        etiqueta_papel = "58mm"
+    elif ancho <= 37:
+        etiqueta_papel = "70mm"
+
+    lineas.append("Ancho: {} columnas ({})".format(ancho, etiqueta_papel))
     lineas.append(linea_separadora("-", ancho))
-    lineas.append(centrar_texto("¡La comunicacion con la", ancho))
-    lineas.append(centrar_texto("impresora funciona correctamente!", ancho))
+    if ancho <= 32:
+        lineas.append(centrar_texto("¡La comunicacion con", ancho))
+        lineas.append(centrar_texto("la impresora funciona", ancho))
+        lineas.append(centrar_texto("correctamente!", ancho))
+    else:
+        lineas.append(centrar_texto("¡La comunicacion con la", ancho))
+        lineas.append(centrar_texto("impresora funciona correctamente!", ancho))
     lineas.append(linea_separadora("=", ancho))
     lineas.append("\n")
 

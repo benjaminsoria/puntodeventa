@@ -89,6 +89,26 @@ class TestPuntoDeVenta(unittest.TestCase):
         self.assertIsNotNone(ruta_t)
         self.assertTrue(os.path.exists(ruta_t))
 
+        # Probar ticket con formato de 70mm (36 columnas)
+        cfg_70 = dict(cfg)
+        cfg_70['ancho_ticket'] = 36
+        texto_t_70 = ticket.generar_texto_ticket(datos_venta, cfg_70)
+        self.assertIn("T-99999", texto_t_70)
+        self.assertIn("TOTAL A PAGAR", texto_t_70)
+        for linea in texto_t_70.split("\n"):
+            self.assertLessEqual(len(linea), 36)
+
+        # Probar que especificar '70' o '70mm' normaliza correctamente a 36 columnas
+        self.assertEqual(ticket.resolver_ancho_ticket(70), 36)
+        self.assertEqual(ticket.resolver_ancho_ticket("70mm"), 36)
+        self.assertEqual(ticket.resolver_ancho_ticket(36), 36)
+
+        cfg_70_str = dict(cfg)
+        cfg_70_str['ancho_ticket'] = "70"
+        texto_t_70_str = ticket.generar_texto_ticket(datos_venta, cfg_70_str)
+        for linea in texto_t_70_str.split("\n"):
+            self.assertLessEqual(len(linea), 36)
+
         # Probar corte de caja
         resumen = {
             'id_turno': 99,
@@ -107,6 +127,13 @@ class TestPuntoDeVenta(unittest.TestCase):
         texto_c = ticket.generar_texto_corte(resumen, movs, cfg)
         self.assertIn("CORTE DE CAJA", texto_c)
         self.assertIn("TOTAL ESPERADO EN CAJA", texto_c)
+
+        # Probar corte de caja con formato 70mm
+        texto_c_70 = ticket.generar_texto_corte(resumen, movs, cfg_70)
+        self.assertIn("CORTE DE CAJA", texto_c_70)
+        self.assertIn("TOTAL ESPERADO EN CAJA", texto_c_70)
+        for linea in texto_c_70.split("\n"):
+            self.assertLessEqual(len(linea), 36)
 
         ruta_c = ticket.guardar_corte_en_archivo(resumen, movs, cfg)
         self.assertIsNotNone(ruta_c)
@@ -171,11 +198,23 @@ class TestPuntoDeVenta(unittest.TestCase):
         ok_imp, msg_imp = ticket.imprimir_ticket(datos_venta, cfg, abrir_cajon_tambien=True)
         self.assertTrue(ok_imp)
 
-        # 5. Probar prueba de impresora y cajón
+        # 5. Probar prueba de impresora y cajón (58mm, 70mm y 80mm)
         ok_test_imp, _ = ticket.probar_impresion("POS-58", 32)
         self.assertTrue(ok_test_imp)
+        ok_test_imp_70, _ = ticket.probar_impresion("POS-70", 36)
+        self.assertTrue(ok_test_imp_70)
+        ok_test_imp_70_mm, _ = ticket.probar_impresion("POS-70", 70)
+        self.assertTrue(ok_test_imp_70_mm)
         ok_test_caj, _ = ticket.probar_cajon("POS-58")
         self.assertTrue(ok_test_caj)
+
+        # Verificar opciones de ancho disponibles
+        opciones = ticket.obtener_opciones_ancho()
+        anchos_disponibles = [op[0] for op in opciones]
+        self.assertIn(32, anchos_disponibles)
+        self.assertIn(36, anchos_disponibles)
+        self.assertIn(40, anchos_disponibles)
+        self.assertEqual(ticket.ANCHO_70MM, 36)
 
         # 6. Probar reconstrucción de ticket para reimpresión
         turno = database.obtener_turno_actual()

@@ -55,5 +55,5 @@ Simplemente haz **doble clic en el icono del Punto de Venta en el Escritorio**.
 - **Memoria RAM:** 256 MB o más.
 - **Espacio en Disco:** Menos de 50 MB en total.
 - **Lector de Código de Barras (Opcional):** Cualquier lector USB tipo pistola (Plug & Play, no requiere drivers especiales).
-- **Impresora de Tickets:** Compatible con cualquier impresora térmica (58mm u 80mm por USB, LPT o COM). Se comunica mediante el Spooler nativo de Windows XP sin requerir controladores especiales ni paquetes externos.
+- **Impresora de Tickets:** Compatible con cualquier impresora térmica (58mm, 70mm u 80mm por USB, LPT o COM). Se comunica mediante el Spooler nativo de Windows XP sin requerir controladores especiales ni paquetes externos.
 - **Cajón de Dinero:** Se conecta mediante cable RJ11 (tipo telefónico) directamente a la parte trasera de la impresora de tickets. El sistema envía el pulso ESC/POS para abrirlo de forma automática o con la tecla **F8**.
