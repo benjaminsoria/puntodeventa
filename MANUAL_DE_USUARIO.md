@@ -72,6 +72,23 @@ Haga clic en la pestaña **[F2] INVENTARIO**.
 3. Si es un dulce que se vende mucho, marque la casilla **"Marcar como Dulce Favorito"** para que aparezca en los botones rápidos de venta.
 4. Haga clic en **Guardar**.
 
+### Exportar e Imprimir Etiquetas de Precios (.doc):
+En la parte inferior de la lista de dulces verá el botón morado **`Exportar Etiquetas (.doc)`**.
+1. Haga clic en el botón **`Exportar Etiquetas (.doc)`**.
+2. Aparecerá una ventana donde podrá elegir:
+   - **Qué dulces incluir:** Todos los dulces del catálogo, los dulces filtrados o solo el dulce seleccionado.
+   - **Cantidad de etiquetas por dulce:** 1 etiqueta por cada dulce (ideal para anaqueles y charolas), o 2 o más si tiene varios mostradores.
+3. Presione **Enter** o haga clic en **`Generar Etiquetas en Escritorio`**.
+4. ¡Listo! El archivo se generará al instante y se guardará directamente en su **Escritorio** con el nombre:
+   ```text
+   etiquetas_AAAA-MM-DD.doc  (ejemplo: etiquetas_2026-11-15.doc)
+   ```
+5. **Características de las etiquetas:**
+   - **Medidas exactas:** 1.5 cm de alto por 5.0 cm de ancho.
+   - **Máximo aprovechamiento:** Caben **68 etiquetas por hoja Carta** (4 columnas x 17 filas), organizadas en una cuadrícula con líneas punteadas para cortarlas fácilmente con tijeras o guillotina.
+   - **Contenido legible:** Muestra el nombre del dulce y el precio en letras grandes y legibles.
+   - **Compatibilidad total:** Se abre directamente en Microsoft Word, WordPad o LibreOffice listo para mandar a imprimir (Ctrl + P).
+
 ---
 
 ## 4. Corte de Caja y Cierre del Día

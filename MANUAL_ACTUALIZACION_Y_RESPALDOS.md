@@ -23,46 +23,60 @@ En este archivo SQLite se almacenan:
 
 ---
 
-## 📦 Parte 1: Cómo instalar esta actualización (Impresora 70 mm) sin afectar tus datos
+## 📦 Parte 1: Cómo instalar la actualización (Exportación de Etiquetas en .doc) sin afectar tus datos
 
-Los únicos archivos de código modificados en esta actualización son:
-1. `ticket.py` (Lógica de formateo a 70 mm, 58 mm y 80 mm).
-2. `configuracion.py` (Nueva opción visual de 70 mm en Ajustes).
+Los únicos archivos de código modificados/agregados en esta actualización son:
+1. `inventario.py` (Nuevo botón "Exportar Etiquetas (.doc)" y ventana de opciones en la pestaña de Inventario).
+2. `etiquetas.py` (Módulo autónomo para formatear etiquetas de 1.5 cm x 5.0 cm a 68 por página y guardarlas en el Escritorio).
+3. `MANUAL_DE_USUARIO.md` *(Documentación actualizada)*.
 
-La estructura de la base de datos **no requiere migraciones**, ya que el campo de ancho de ticket ya estaba preparado para almacenar valores enteros (como `36` columnas).
+> **GARANTÍA DE SEGURIDAD PARA TU BASE DE DATOS:**  
+> La estructura de la base de datos **`dulceria.db` no sufre ninguna modificación ni requiere migraciones**. Tus productos, precios, historial de ventas, cortes de caja y turnos se mantienen 100% intactos.
 
-### Procedimiento Recomendado (Paso a Paso):
+---
+
+### Procedimiento Recomendado de Actualización (Paso a Paso):
 
 #### Paso 1: Cerrar el programa en la computadora de la dulcería
-Asegúrate de que el Punto de Venta esté completamente cerrado antes de copiar archivos.
+Asegúrate de que el Punto de Venta esté completamente cerrado antes de copiar o reemplazar archivos.
 
-#### Paso 2: Copiar el respaldo preventivo
-Antes de cualquier cambio, haz una copia de seguridad de tu base de datos actual (ver Parte 2).
+#### Paso 2: Respaldo preventivo (Recomendado)
+Antes de copiar archivos, haz una copia de seguridad rápida de tu base de datos `dulceria.db` en tu memoria USB (ver Parte 2).
 
 #### Paso 3: Preparar la memoria USB con los archivos actualizados
-En la memoria USB, copia **únicamente los archivos de código actualizados**:
-- `ticket.py`
-- `configuracion.py`
-- `MANUAL_DE_USUARIO.md` *(opcional, documentación)*
+En la memoria USB (Pendrive), copia **únicamente los siguientes archivos**:
+- `inventario.py`
+- `etiquetas.py`
+- `MANUAL_DE_USUARIO.md` *(opcional)*
 - `MANUAL_ACTUALIZACION_Y_RESPALDOS.md` *(opcional)*
 
-*(Evita llevar o sobreescribir el archivo `dulceria.db` desde la máquina de desarrollo a la tienda).*
+*(⚠️ NUNCA copies ni lleves el archivo `dulceria.db` desde tu máquina personal hacia la tienda, para no sobreescribir las ventas reales de la dulcería).*
 
-#### Paso 4: Pegar en la computadora de la tienda
+#### Paso 4: Pegar en la computadora de la dulcería
 1. Conecta la memoria USB en la computadora de la dulcería.
-2. Abre la memoria y copia los archivos `ticket.py` y `configuracion.py`.
-3. Ve a la carpeta del sistema (por ejemplo `C:\puntodeventa\` o donde lo tengas instalado).
-4. Pega los archivos. Cuando Windows pregunte si deseas **Reemplazar / Sobreescribir**, haz clic en **Sí a todo**.
+2. Abre la memoria USB y copia los archivos `inventario.py` y `etiquetas.py`.
+3. Ve a la carpeta donde está instalado el sistema (usualmente `C:\puntodeventa\` o en el Escritorio).
+4. Pega los archivos (`Ctrl + V`). Cuando Windows te pregunte si deseas **Reemplazar / Sobreescribir**, selecciona **"Sí a todo"**.
 
-#### Paso 5: Abrir el sistema y configurar los 70 mm
+#### Paso 5: Abrir el sistema y generar tus etiquetas
 1. Inicia el sistema con el acceso directo habitual (`iniciar_pos.bat`).
-2. Presiona la tecla **F5** o haz clic en **[F5] AJUSTES / USB**.
-3. En la sección central **"2. Impresora Térmica y Cajón de Dinero"**:
-   - En **Ancho de Papel**, verás la nueva opción:  
-     🔘 **70 mm (36 car.)**
-   - Selecciónala.
-4. Haz clic en **`🖨 Probar Impresión de Ticket`** para comprobar que el ticket de prueba imprima en los 36 caracteres exactos.
-5. Haz clic en **`💾 Guardar Cambios de Impresora`**.
+2. Presiona la tecla **F2** o haz clic en la pestaña **[F2] INVENTARIO**.
+3. En la barra de botones inferior verás el nuevo botón morado:  
+   **`Exportar Etiquetas (.doc)`**.
+4. Haz clic en él. Aparecerá la ventana de opciones:
+   - Puedes exportar todos los dulces, o solo los que tengas filtrados.
+   - Puedes indicar cuántas copias por dulce deseas (por defecto 1 copia para mostrador).
+5. Presiona **Enter** o haz clic en **`Generar Etiquetas en Escritorio`**.
+6. En tu **Escritorio** aparecerá el archivo generado con la fecha del día:  
+   ```text
+   etiquetas_AAAA-MM-DD.doc
+   ```
+7. Ábrelo con Microsoft Word, WordPad o LibreOffice y verás la cuadrícula lista con 68 etiquetas por página para mandar a imprimir.
+
+---
+
+## 🖨️ Historial de Actualizaciones Previas (Impresora 70 mm)
+*(Para consultar cómo configurar impresoras de 70 mm en Ajustes F5, consulte la sección anterior en este mismo manual).*
 
 ---
 

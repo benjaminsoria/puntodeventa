@@ -248,5 +248,57 @@ class TestPuntoDeVenta(unittest.TestCase):
             cortar_papel=1
         )
 
+    def test_etiquetas_doc_exportacion(self):
+        import etiquetas
+        import datetime
+
+        # 1. Verificar dimensiones especificadas (1.5 cm de alto por 5.0 cm de ancho)
+        self.assertEqual(etiquetas.COLUMNAS_POR_HOJA, 4)
+        self.assertEqual(etiquetas.FILAS_POR_HOJA, 17)
+        self.assertEqual(etiquetas.ETIQUETAS_POR_HOJA, 68)
+        self.assertEqual(etiquetas.ANCHO_ETIQUETA_TWIPS, 2835)  # 5.0 cm exactos (5 * 567)
+        self.assertEqual(etiquetas.ALTO_ETIQUETA_TWIPS, 850)    # 1.5 cm exactos (1.5 * 567)
+
+        # 2. Verificar función de escape para acentos y caracteres especiales
+        texto_prueba = "Mazapán & Piñata de Café (100% Güero)"
+        texto_escapado = etiquetas.escapar_rtf(texto_prueba)
+        self.assertTrue(all(ord(c) < 128 for c in texto_escapado), "El RTF generado debe ser 100% ASCII seguro.")
+        self.assertIn(r"\'e1", texto_escapado)  # á
+        self.assertIn(r"\'f1", texto_escapado)  # ñ
+
+        # 3. Probar formateo de precios
+        self.assertEqual(etiquetas.formatear_precio(15), "$15.00")
+        self.assertEqual(etiquetas.formatear_precio(7.5), "$7.50")
+        self.assertEqual(etiquetas.formatear_precio("12.50"), "$12.50")
+
+        # 4. Probar generación de RTF con lista de productos
+        prods = [
+            {'nombre': 'Paleta Payaso', 'precio_venta': 18.00},
+            {'nombre': 'Mazapán de la Rosa 28g', 'precio_venta': 7.00},
+            {'nombre': 'Bubbaloo Fresa', 'precio_venta': 2.00}
+        ]
+        rtf_doc = etiquetas.generar_rtf_etiquetas(prods, copias_por_producto=1)
+        self.assertIsNotNone(rtf_doc)
+        self.assertIn(r"{\rtf1", rtf_doc)
+        self.assertIn("Paleta Payaso", rtf_doc)
+        self.assertIn("$18.00", rtf_doc)
+        self.assertIn(r"\trrh-850", rtf_doc)  # Altura fija de 1.5 cm
+
+        # 5. Probar exportación a archivo en el Escritorio
+        exito, msg, ruta = etiquetas.exportar_etiquetas_escritorio(prods, copias_por_producto=2)
+        self.assertTrue(exito)
+        self.assertIsNotNone(ruta)
+        self.assertTrue(os.path.exists(ruta))
+
+        # Verificar nombre de archivo: etiquetas_YYYY-MM-DD.doc
+        hoy = datetime.datetime.now().strftime("%Y-%m-%d")
+        self.assertIn("etiquetas_{}".format(hoy), os.path.basename(ruta))
+        self.assertTrue(ruta.endswith(".doc"))
+
+        # 6. Probar lista vacía
+        exito_vacia, msg_vacia, ruta_vacia = etiquetas.exportar_etiquetas_escritorio([])
+        self.assertFalse(exito_vacia)
+        self.assertIsNone(ruta_vacia)
+
 if __name__ == '__main__':
     unittest.main()

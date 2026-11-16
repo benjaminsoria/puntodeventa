@@ -9,9 +9,15 @@ try:
     import tkinter as tk
     from tkinter import ttk, messagebox
 except ImportError:
-    pass
+    tk = None
+    ttk = None
+    messagebox = None
 
+_FrameBase = tk.Frame if tk else object
+
+import datetime
 import database
+import etiquetas
 
 class DialogoProducto(object):
     """Ventana para agregar o editar un producto de la dulcería."""
@@ -254,7 +260,144 @@ class DialogoEntradaStock(object):
             messagebox.showerror("Error", msg, parent=self.top)
 
 
-class FrameInventario(tk.Frame):
+class DialogoExportarEtiquetas(object):
+    """Ventana para configurar y exportar etiquetas de precios en archivo .doc."""
+
+    def __init__(self, parent, prods_visibles, prods_todos, sel_actual=None):
+        self.parent = parent
+        self.prods_visibles = prods_visibles
+        self.prods_todos = prods_todos
+        self.sel_actual = sel_actual
+
+        self.top = tk.Toplevel(parent)
+        self.top.title("Exportar Etiquetas de Precios (.doc)")
+        self.top.geometry("520x420")
+        self.top.resizable(False, False)
+        self.top.transient(parent)
+        self.top.grab_set()
+
+        # Centrar en pantalla
+        self.top.update_idletasks()
+        x = (self.top.winfo_screenwidth() // 2) - 260
+        y = (self.top.winfo_screenheight() // 2) - 210
+        self.top.geometry("520x420+{}+{}".format(max(0, x), max(0, y)))
+
+        self.crear_formulario()
+
+    def crear_formulario(self):
+        f = tk.Frame(self.top, padx=18, pady=12, bg="#F7FAFC")
+        f.pack(fill=tk.BOTH, expand=True)
+
+        tk.Label(f, text="EXPORTAR ETIQUETAS DE PRECIOS (.DOC)", font=("Arial", 13, "bold"), bg="#F7FAFC", fg="#2D3748").pack()
+        tk.Label(f, text="Medidas: 1.5 cm de alto x 5.0 cm de ancho (68 etiquetas por hoja)",
+                 font=("Arial", 9), bg="#F7FAFC", fg="#4A5568").pack(pady=(2, 10))
+
+        # 1. Selección de productos
+        lf_prods = tk.LabelFrame(f, text=" 1. ¿Qué dulces deseas incluir? ", font=("Arial", 10, "bold"), bg="#F7FAFC", fg="#2D3748", padx=10, pady=8)
+        lf_prods.pack(fill=tk.X, pady=(0, 10))
+
+        self.var_modo = tk.StringVar(value="todos")
+
+        # Opción A: Todos los productos
+        txt_todos = "Todos los dulces activos ({} productos)".format(len(self.prods_todos))
+        rb_todos = tk.Radiobutton(lf_prods, text=txt_todos, variable=self.var_modo, value="todos",
+                                  font=("Arial", 10), bg="#F7FAFC", fg="#2D3748")
+        rb_todos.pack(anchor="w", pady=2)
+
+        # Opción B: Filtrados (si aplica)
+        txt_filt = "Solo los dulces mostrados en la lista ({} productos)".format(len(self.prods_visibles))
+        rb_filt = tk.Radiobutton(lf_prods, text=txt_filt, variable=self.var_modo, value="filtrados",
+                                 font=("Arial", 10), bg="#F7FAFC", fg="#2D3748")
+        rb_filt.pack(anchor="w", pady=2)
+        if len(self.prods_visibles) == len(self.prods_todos):
+            rb_filt.config(state="disabled")
+
+        # Opción C: Seleccionado (si hay)
+        if self.sel_actual:
+            nom_sel = self.sel_actual['nombre']
+            if len(nom_sel) > 30:
+                nom_sel = nom_sel[:27] + "..."
+            txt_sel = "Solo el dulce seleccionado: '{}'".format(nom_sel)
+            rb_sel = tk.Radiobutton(lf_prods, text=txt_sel, variable=self.var_modo, value="seleccionado",
+                                    font=("Arial", 10), bg="#F7FAFC", fg="#2D3748")
+            rb_sel.pack(anchor="w", pady=2)
+
+        # 2. Configuración de copias y destino
+        lf_config = tk.LabelFrame(f, text=" 2. Cantidad de etiquetas y destino ", font=("Arial", 10, "bold"), bg="#F7FAFC", fg="#2D3748", padx=10, pady=8)
+        lf_config.pack(fill=tk.X, pady=(0, 10))
+
+        f_copias = tk.Frame(lf_config, bg="#F7FAFC")
+        f_copias.pack(fill=tk.X, pady=4)
+        tk.Label(f_copias, text="Etiquetas por cada dulce:", font=("Arial", 10, "bold"), bg="#F7FAFC").pack(side=tk.LEFT)
+        self.var_copias = tk.StringVar(value="1")
+        entry_copias = tk.Entry(f_copias, textvariable=self.var_copias, font=("Arial", 11, "bold"), width=5, justify="center")
+        entry_copias.pack(side=tk.LEFT, padx=8)
+        tk.Label(f_copias, text="(Ej. 1 para mostrador, 2 si tienes exhibidor)", font=("Arial", 9), fg="#718096", bg="#F7FAFC").pack(side=tk.LEFT)
+
+        # Destino
+        hoy = datetime.datetime.now().strftime("%Y-%m-%d")
+        tk.Label(lf_config, text="Archivo a generar: etiquetas_{}.doc".format(hoy), font=("Arial", 9, "bold"), fg="#276749", bg="#F7FAFC").pack(anchor="w", pady=(4, 1))
+        tk.Label(lf_config, text="Se guardará automáticamente en el Escritorio de esta computadora.", font=("Arial", 8), fg="#718096", bg="#F7FAFC").pack(anchor="w")
+
+        # Botones
+        f_btn = tk.Frame(f, bg="#F7FAFC")
+        f_btn.pack(fill=tk.X, pady=(8, 0))
+
+        self.btn_guardar = tk.Button(f_btn, text="Generar Etiquetas en Escritorio (Enter)", font=("Arial", 11, "bold"),
+                                     bg="#2B6CB0", fg="white", pady=7, command=self.ejecutar_exportacion)
+        self.btn_guardar.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+
+        btn_cancel = tk.Button(f_btn, text="Cancelar (Esc)", font=("Arial", 10), bg="#E2E8F0", pady=7,
+                               command=self.top.destroy)
+        btn_cancel.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
+
+        self.top.bind("<Return>", lambda e: self.ejecutar_exportacion())
+        self.top.bind("<KP_Enter>", lambda e: self.ejecutar_exportacion())
+        self.top.bind("<Escape>", lambda e: self.top.destroy())
+
+        self.btn_guardar.focus_set()
+
+    def ejecutar_exportacion(self):
+        try:
+            copias = int(self.var_copias.get().strip())
+            if copias <= 0:
+                raise ValueError()
+        except ValueError:
+            messagebox.showwarning("Atención", "Por favor ingrese un número entero mayor a 0 para las etiquetas.", parent=self.top)
+            return
+
+        modo = self.var_modo.get()
+        if modo == "todos":
+            prods = self.prods_todos
+        elif modo == "filtrados":
+            prods = self.prods_visibles
+        elif modo == "seleccionado" and self.sel_actual:
+            prods = [self.sel_actual]
+        else:
+            prods = self.prods_todos
+
+        if not prods:
+            messagebox.showwarning("Sin dulces", "No se encontraron dulces para exportar.", parent=self.top)
+            return
+
+        exito, msg, ruta = etiquetas.exportar_etiquetas_escritorio(prods, copias_por_producto=copias)
+        if exito:
+            self.top.destroy()
+            total = len(prods) * copias
+            abrir = messagebox.askyesno(
+                "¡Etiquetas Generadas!",
+                "¡Se generaron exitosamente {} etiquetas!\n\n"
+                "Archivo guardado en el Escritorio:\n{}\n\n"
+                "¿Desea abrir el archivo en Word ahora para imprimirlo?".format(total, ruta),
+                parent=self.parent
+            )
+            if abrir:
+                etiquetas.abrir_documento(ruta)
+        else:
+            messagebox.showerror("Error al Exportar", msg, parent=self.top)
+
+
+class FrameInventario(_FrameBase):
     """Pantalla principal de administración del inventario y catálogo."""
 
     def __init__(self, parent, app_principal):
@@ -349,6 +492,11 @@ class FrameInventario(tk.Frame):
         btn_fav = tk.Button(frame_acciones, text="Alternar Favorito", font=("Arial", 10), bg="#E2E8F0", padx=8, pady=4,
                             command=self.alternar_favorito)
         btn_fav.pack(side=tk.LEFT, padx=4)
+
+        btn_etiquetas = tk.Button(frame_acciones, text="Exportar Etiquetas (.doc)", font=("Arial", 10, "bold"),
+                                  bg="#6B46C1", fg="white", padx=10, pady=4,
+                                  command=self.abrir_dialogo_etiquetas)
+        btn_etiquetas.pack(side=tk.LEFT, padx=6)
 
         btn_eliminar = tk.Button(frame_acciones, text="Eliminar / Desactivar", font=("Arial", 10), bg="#FED7D7", fg="#9B2C2C", padx=8, pady=4,
                                  command=self.eliminar_producto)
@@ -454,3 +602,23 @@ class FrameInventario(tk.Frame):
         # Actualizar favoritos en la pantalla de ventas
         if hasattr(self.app, 'pantalla_ventas'):
             self.app.pantalla_ventas.recargar_favoritos()
+
+    def abrir_dialogo_etiquetas(self):
+        prods_todos = database.obtener_todos_los_productos(solo_activos=True)
+        if not prods_todos:
+            messagebox.showinfo("Sin productos", "No hay productos registrados para generar etiquetas.", parent=self)
+            return
+
+        ids_visibles = set(self.tree.get_children())
+        prods_visibles = [p for p in prods_todos if str(p['id']) in ids_visibles]
+
+        sel = self.tree.selection()
+        sel_prod = None
+        if sel:
+            id_sel = int(sel[0])
+            for p in prods_todos:
+                if p['id'] == id_sel:
+                    sel_prod = p
+                    break
+
+        DialogoExportarEtiquetas(self, prods_visibles, prods_todos, sel_prod)
