@@ -128,6 +128,28 @@ def codificar_para_impresora(texto):
             except Exception:
                 return texto.encode('ascii', errors='replace')
 
+def formatear_cantidad_ticket(cant, max_len=5):
+    """
+    Formatea la cantidad de forma compacta y legible para ticket térmico.
+    Si cabe como entero (ej. 1, 2): '1', '2'.
+    Si es decimal: muestra decimales limpios sin ceros redundantes a la derecha.
+    Ej: 0.5 -> '0.5' o '0.500'; si excede max_len compacta a '.5' o '.500'.
+    """
+    try:
+        c = float(cant)
+        if c.is_integer():
+            return "{:.0f}".format(c)
+        s = "{:.3f}".format(c).rstrip('0')
+        if s.endswith('.'):
+            s += '0'
+        if len(s) <= max_len:
+            return s
+        if s.startswith("0.") and len(s) - 1 <= max_len:
+            return s[1:]
+        return s[:max_len]
+    except Exception:
+        return str(cant)[:max_len]
+
 def generar_texto_ticket(datos_venta, config=None):
     """
     Genera el formato en texto plano para un ticket de compra adaptado a:
@@ -164,54 +186,56 @@ def generar_texto_ticket(datos_venta, config=None):
 
     if ancho <= 32:
         # Formato compacto para impresoras de 58mm (32 columnas exactas)
-        # CAN(3) DESC(13) P.U(6) TOTAL(7) -> 3+1+13+1+6+1+7 = 32
-        lineas.append("{:<3} {:<13} {:>6} {:>7}".format("CAN", "PRODUCTO", "P.U.", "TOTAL"))
+        # CAN(4) DESC(12) P.U(6) TOTAL(7) -> 4+1+12+1+6+1+7 = 31 <= 32
+        lineas.append("{:<4} {:<12} {:>6} {:>7}".format("CANT", "PRODUCTO", "P.U.", "TOTAL"))
         lineas.append(linea_separadora("-", ancho))
 
         for art in datos_venta.get('articulos', []):
             cant = art.get('cantidad', 1)
             total_piezas += cant
             nombre = art.get('nombre', 'Producto')
-            if len(nombre) > 13:
-                nombre = nombre[:11] + ".."
+            if len(nombre) > 12:
+                nombre = nombre[:10] + ".."
             precio = float(art.get('precio', 0.0))
             subtotal = float(art.get('subtotal', cant * precio))
-            str_cant = "{:.0f}".format(cant) if float(cant).is_integer() else "{:.1f}".format(cant)
-            lineas.append("{:<3} {:<13} {:>6.2f} {:>7.2f}".format(str_cant, nombre, precio, subtotal))
+            str_cant = formatear_cantidad_ticket(cant, max_len=4)
+            lineas.append("{:<4} {:<12} {:>6.2f} {:>7.2f}".format(str_cant, nombre, precio, subtotal))
 
         lineas.append(linea_separadora("=", ancho))
-        lineas.append("{:<18} {:>13}".format("TOTAL ARTICULOS:", "{:.0f}".format(total_piezas)))
+        str_total_art = "{:.0f}".format(total_piezas) if float(total_piezas).is_integer() else formatear_cantidad_ticket(total_piezas, max_len=6)
+        lineas.append("{:<18} {:>13}".format("TOTAL ARTICULOS:", str_total_art))
         lineas.append("{:<18} ${:>12.2f}".format("TOTAL A PAGAR:", float(datos_venta.get('total', 0.0))))
         lineas.append("{:<18} ${:>12.2f}".format("PAGO CON:", float(datos_venta.get('pago_con', 0.0))))
         lineas.append("{:<18} ${:>12.2f}".format("SU CAMBIO:", float(datos_venta.get('cambio', 0.0))))
         lineas.append(linea_separadora("=", ancho))
     elif ancho <= 37:
         # Formato intermedio para impresoras de 70mm (36 columnas exactas)
-        # CANT(4) PRODUCTO(16) P.UNIT(6) TOTAL(7) -> 4+1+16+1+6+1+7 = 36
-        lineas.append("{:<4} {:<16} {:>6} {:>7}".format("CANT", "PRODUCTO", "P.UNIT", "TOTAL"))
+        # CANT(5) PRODUCTO(15) P.UNIT(6) TOTAL(7) -> 5+1+15+1+6+1+7 = 35 <= 36
+        lineas.append("{:<5} {:<15} {:>6} {:>7}".format("CANT", "PRODUCTO", "P.UNIT", "TOTAL"))
         lineas.append(linea_separadora("-", ancho))
 
         for art in datos_venta.get('articulos', []):
             cant = art.get('cantidad', 1)
             total_piezas += cant
             nombre = art.get('nombre', 'Producto')
-            if len(nombre) > 16:
-                nombre = nombre[:14] + ".."
+            if len(nombre) > 15:
+                nombre = nombre[:13] + ".."
             precio = float(art.get('precio', 0.0))
             subtotal = float(art.get('subtotal', cant * precio))
-            str_cant = "{:.0f}".format(cant) if float(cant).is_integer() else "{:.1f}".format(cant)
-            lineas.append("{:<4} {:<16} {:>6.2f} {:>7.2f}".format(str_cant, nombre, precio, subtotal))
+            str_cant = formatear_cantidad_ticket(cant, max_len=5)
+            lineas.append("{:<5} {:<15} {:>6.2f} {:>7.2f}".format(str_cant, nombre, precio, subtotal))
 
         lineas.append(linea_separadora("=", ancho))
-        lineas.append("{:<20} {:>15}".format("TOTAL ARTICULOS:", "{:.0f}".format(total_piezas)))
+        str_total_art = "{:.0f}".format(total_piezas) if float(total_piezas).is_integer() else formatear_cantidad_ticket(total_piezas, max_len=6)
+        lineas.append("{:<20} {:>15}".format("TOTAL ARTICULOS:", str_total_art))
         lineas.append("{:<20} ${:>14.2f}".format("TOTAL A PAGAR:", float(datos_venta.get('total', 0.0))))
         lineas.append("{:<20} ${:>14.2f}".format("PAGO CON:", float(datos_venta.get('pago_con', 0.0))))
         lineas.append("{:<20} ${:>14.2f}".format("SU CAMBIO:", float(datos_venta.get('cambio', 0.0))))
         lineas.append(linea_separadora("=", ancho))
     else:
         # Formato estándar para impresoras de 80mm (40 a 48 columnas)
-        w_prod = max(15, ancho - 23)
-        header = "{:<5} {:<" + str(w_prod) + "} {:>7} {:>8}"
+        w_prod = max(15, ancho - 24)
+        header = "{:<6} {:<" + str(w_prod) + "} {:>7} {:>8}"
         lineas.append(header.format("CANT", "PRODUCTO", "P.UNIT", "TOTAL"))
         lineas.append(linea_separadora("-", ancho))
 
@@ -223,15 +247,16 @@ def generar_texto_ticket(datos_venta, config=None):
                 nombre = nombre[:w_prod - 2] + ".."
             precio = float(art.get('precio', 0.0))
             subtotal = float(art.get('subtotal', cant * precio))
-            str_cant = "{:.0f}".format(cant) if float(cant).is_integer() else "{:.2f}".format(cant)
-            row_fmt = "{:<5} {:<" + str(w_prod) + "} {:>7.2f} {:>8.2f}"
+            str_cant = formatear_cantidad_ticket(cant, max_len=6)
+            row_fmt = "{:<6} {:<" + str(w_prod) + "} {:>7.2f} {:>8.2f}"
             lineas.append(row_fmt.format(str_cant, nombre, precio, subtotal))
 
         lineas.append(linea_separadora("=", ancho))
         w_tit = ancho - 15
         fmt_art = "{:>" + str(w_tit) + "} {:>14}"
         fmt_tot = "{:>" + str(w_tit) + "} ${:>13.2f}"
-        lineas.append(fmt_art.format("TOTAL DE ARTICULOS:", "{:.0f}".format(total_piezas)))
+        str_total_art = "{:.0f}".format(total_piezas) if float(total_piezas).is_integer() else formatear_cantidad_ticket(total_piezas, max_len=7)
+        lineas.append(fmt_art.format("TOTAL DE ARTICULOS:", str_total_art))
         lineas.append(fmt_tot.format("TOTAL A PAGAR:", float(datos_venta.get('total', 0.0))))
         lineas.append(fmt_tot.format("PAGO CON:", float(datos_venta.get('pago_con', 0.0))))
         lineas.append(fmt_tot.format("SU CAMBIO:", float(datos_venta.get('cambio', 0.0))))

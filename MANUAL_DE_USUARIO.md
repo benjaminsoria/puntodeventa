@@ -29,9 +29,24 @@ En la parte superior de la pantalla encontrará las 5 secciones del sistema:
 2. Presione la tecla **Enter** (o clic en "+ Agregar").
 3. Si hay varios dulces parecidos, aparecerá una ventanita para que elija el correcto con un doble clic o con la tecla Enter.
 
-### Modificar Cantidades en el Carrito:
-- **Para vender varias piezas:** En el campo `Cant:` escriba la cantidad antes de escanear (ej. `5`) y luego escanee o seleccione el dulce.
-- **Botones rápidos:** Debajo de la tabla puede usar los botones `[ +1 Pieza ]` o `[ -1 Pieza ]` sobre el dulce seleccionado.
+### Forma Rápida 4: Dulces Sueltos a Granel o Artículos No Catalogados [F7]
+Para vender dulces sueltos por kilo, piezas o cualquier producto que no esté dado de alta en el catálogo:
+1. Presione la tecla **F7** o haga clic en el botón morado **`+ Art. No Catalogado (F7)`** (también si escribe un nombre en el buscador que no existe, el sistema le ofrecerá agregarlo directamente).
+2. Se abrirá la ventana **Artículo No Catalogado / Granel**:
+   - **Nombre:** Escriba el nombre del dulce (ej. *Dulces a Granel*, *Gomitas Sueltas*, o use los botones rápidos).
+   - **Precio por Kilo o Pieza ($):** Escriba el precio unitario (ej. `$200.00`).
+   - **Cantidad o Peso:** Ingrese cuánto se llevan:
+     - Puede escribir directamente decimales: ej. `.500` (medio kilo), `0.5`, `0.250`, `1.250`.
+     - O hacer clic en los **botones rápidos de peso:** `[ 100g ]`, `[ 1/4 Kg ]`, `[ 1/2 Kg ]`, `[ 3/4 Kg ]`, `[ 1 Kg ]`.
+     - O escribir con unidades: `500g`, `250 gr`, `1/2`.
+   - **Cobro por Dinero Solicitado (Opcional):** Si el cliente pide *"Deme $50 pesos de dulce suelto"*, escriba `50` en el recuadro de dinero y el sistema calculará los kilos automáticamente (ej. `0.250 kg`).
+3. El recuadro verde mostrará el **SUBTOTAL A COBRAR** al instante (ej. `$200` x `.500` = `$100.00`).
+4. Presione **Enter** o haga clic en **AGREGAR A LA VENTA**. ¡Listo! Se agregará al carrito de la venta sin afectar el catálogo.
+
+### Modificar Cantidades y Pesos en el Carrito:
+- **Para vender varias piezas o peso decimal antes de escanear:** En el campo `Cant:` escriba la cantidad (ej. `5`, `.500` o `0.250`) y luego escanee o seleccione el dulce.
+- **Modificar cantidad o peso ya en el carrito:** Seleccione el renglón y dé clic en **`[ Modificar Cantidad / Peso ]`** (o dé **doble clic** sobre el renglón). Podrá cambiar el peso (ej. cambiar a `.500` o `1/2 Kg`) y se recalculará automáticamente.
+- **Botones rápidos de piezas:** Debajo de la tabla puede usar los botones `[ +1 Pieza ]` o `[ -1 Pieza ]` sobre el dulce seleccionado.
 - **Eliminar un producto del carrito:** Seleccione el renglón y dé clic en `Quitar Renglón`.
 
 ---

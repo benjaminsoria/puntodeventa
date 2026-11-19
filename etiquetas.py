@@ -233,9 +233,12 @@ def exportar_etiquetas_escritorio(lista_productos, copias_por_producto=1, nombre
         return False, "Error al formatear las etiquetas de los productos.", None
 
     escritorio = obtener_ruta_escritorio()
-    if not os.path.exists(escritorio):
+    if not os.path.exists(escritorio) or not os.access(escritorio, os.W_OK):
         try:
-            os.makedirs(escritorio)
+            if not os.path.exists(escritorio):
+                os.makedirs(escritorio)
+            if not os.access(escritorio, os.W_OK):
+                escritorio = os.path.abspath(".")
         except Exception:
             escritorio = os.path.abspath(".")
 

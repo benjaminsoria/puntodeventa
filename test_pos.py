@@ -300,5 +300,152 @@ class TestPuntoDeVenta(unittest.TestCase):
         self.assertFalse(exito_vacia)
         self.assertIsNone(ruta_vacia)
 
+    def test_interpretar_y_formatear_cantidades(self):
+        import ventas
+        # Probar parseo de cantidades decimales y formatos de peso
+        self.assertEqual(ventas.interpretar_cantidad(".500"), 0.5)
+        self.assertEqual(ventas.interpretar_cantidad("0.5"), 0.5)
+        self.assertEqual(ventas.interpretar_cantidad("0,500"), 0.5)
+        self.assertEqual(ventas.interpretar_cantidad(",250"), 0.25)
+        self.assertEqual(ventas.interpretar_cantidad("500g"), 0.5)
+        self.assertEqual(ventas.interpretar_cantidad("250 gr"), 0.25)
+        self.assertEqual(ventas.interpretar_cantidad("100 gramos"), 0.1)
+        self.assertEqual(ventas.interpretar_cantidad("1/2"), 0.5)
+        self.assertEqual(ventas.interpretar_cantidad("1/4"), 0.25)
+        self.assertEqual(ventas.interpretar_cantidad("3/4"), 0.75)
+        self.assertEqual(ventas.interpretar_cantidad("1.5 kg"), 1.5)
+        self.assertEqual(ventas.interpretar_cantidad("2"), 2.0)
+        self.assertEqual(ventas.interpretar_cantidad(""), 1.0)
+        self.assertIsNone(ventas.interpretar_cantidad("abc", valor_defecto=None))
+
+        # Probar formateo para vista de usuario
+        self.assertEqual(ventas.formatear_cantidad(1.0), "1")
+        self.assertEqual(ventas.formatear_cantidad(2), "2")
+        self.assertEqual(ventas.formatear_cantidad(0.5), "0.500")
+        self.assertEqual(ventas.formatear_cantidad(0.25), "0.250")
+        self.assertEqual(ventas.formatear_cantidad(1.25), "1.250")
+
+    def test_venta_articulo_no_catalogado_medio_kilo(self):
+        # Caso de uso del usuario: Dulces sueltos, precio kilo $200, cantidad .500 gramos, subtotal $100
+        turno = database.obtener_turno_actual()
+        if not turno:
+            exito, id_turno = database.abrir_turno(150.0, "Turno prueba no catalogado")
+            self.assertTrue(exito)
+        else:
+            id_turno = turno['id']
+
+        carrito = [{
+            'id': None,
+            'codigo': 'MANUAL',
+            'nombre': 'Dulces sueltos a granel',
+            'precio': 200.0,
+            'costo': 0.0,
+            'cantidad': 0.500,
+            'subtotal': 100.0
+        }]
+
+        # Paga con $100.00 exacto
+        exito, msg, dt = database.registrar_venta(id_turno, carrito, 100.0, "Efectivo")
+        self.assertTrue(exito)
+        self.assertEqual(dt['total'], 100.00)
+        self.assertEqual(dt['cambio'], 0.00)
+        id_venta = dt['id_venta']
+
+        # Verificar detalle en BD
+        detalles = database.obtener_detalle_venta(id_venta)
+        self.assertEqual(len(detalles), 1)
+        det = detalles[0]
+        self.assertIsNone(det['id_producto'])
+        self.assertEqual(det['codigo'], 'MANUAL')
+        self.assertEqual(det['nombre_producto'], 'Dulces sueltos a granel')
+        self.assertAlmostEqual(det['cantidad'], 0.500)
+        self.assertEqual(det['precio_unitario'], 200.0)
+        self.assertEqual(det['subtotal'], 100.0)
+
+        # Probar reimpresión
+        datos_reimp = database.preparar_datos_ticket_desde_venta(id_venta)
+        self.assertIsNotNone(datos_reimp)
+        self.assertEqual(datos_reimp['total'], 100.0)
+        self.assertEqual(len(datos_reimp['articulos']), 1)
+        self.assertEqual(datos_reimp['articulos'][0]['nombre'], 'Dulces sueltos a granel')
+        self.assertAlmostEqual(datos_reimp['articulos'][0]['cantidad'], 0.500)
+
+        # Probar cancelación (no debe fallar aunque id_producto sea None)
+        exito_cancel, msg_cancel = database.cancelar_venta(id_venta, "Prueba cancelación artículo no catalogado")
+        self.assertTrue(exito_cancel)
+
+    def test_venta_mixta_catalogado_y_no_catalogado(self):
+        # Venta combinada: 1 Mazapán del catálogo + .500 kg de dulces a granel ($200/kg)
+        turno = database.obtener_turno_actual()
+        if not turno:
+            _, id_turno = database.abrir_turno(100.0, "Turno mixto")
+        else:
+            id_turno = turno['id']
+
+        p_mazapan = database.buscar_producto_por_codigo("101")
+        stock_antes = p_mazapan['stock']
+
+        carrito = [
+            {
+                'id': p_mazapan['id'],
+                'codigo': p_mazapan['codigo'],
+                'nombre': p_mazapan['nombre'],
+                'precio': p_mazapan['precio_venta'], # 7.00
+                'costo': p_mazapan['precio_costo'],
+                'cantidad': 1,
+                'subtotal': p_mazapan['precio_venta']
+            },
+            {
+                'id': None,
+                'codigo': 'MANUAL',
+                'nombre': 'Gomitas surtidas sueltas',
+                'precio': 200.0,
+                'costo': 0.0,
+                'cantidad': 0.5,
+                'subtotal': 100.0
+            }
+        ]
+
+        total_esperado = round(p_mazapan['precio_venta'] + 100.0, 2)
+        exito, msg, dt = database.registrar_venta(id_turno, carrito, 200.0, "Efectivo")
+        self.assertTrue(exito)
+        self.assertEqual(dt['total'], total_esperado)
+        self.assertEqual(dt['cambio'], round(200.0 - total_esperado, 2))
+
+        # Verificar que el stock de Mazapán se descontó en 1
+        p_despues = database.buscar_producto_por_codigo("101")
+        self.assertEqual(p_despues['stock'], stock_antes - 1)
+
+        # Generar tickets en 58mm, 70mm y 80mm
+        import ticket
+        cfg = database.obtener_configuracion()
+
+        # 58mm
+        cfg_58 = dict(cfg, ancho_ticket=32)
+        t_58 = ticket.generar_texto_ticket(dt, cfg_58)
+        self.assertIn("Gomitas su", t_58)
+        self.assertIn("TOTAL A PAGAR", t_58)
+        for linea in t_58.split("\n"):
+            self.assertLessEqual(len(linea), 32)
+
+        # 70mm
+        cfg_70 = dict(cfg, ancho_ticket=36)
+        t_70 = ticket.generar_texto_ticket(dt, cfg_70)
+        self.assertIn("Gomitas surt", t_70)
+        for linea in t_70.split("\n"):
+            self.assertLessEqual(len(linea), 36)
+
+        # 80mm
+        cfg_80 = dict(cfg, ancho_ticket=40)
+        t_80 = ticket.generar_texto_ticket(dt, cfg_80)
+        self.assertIn("Gomitas surtid", t_80)
+        for linea in t_80.split("\n"):
+            self.assertLessEqual(len(linea), 40)
+
+        # Cancelar venta y verificar que Mazapán regresa a su stock
+        database.cancelar_venta(dt['id_venta'], "Restablecer prueba")
+        p_restaurado = database.buscar_producto_por_codigo("101")
+        self.assertEqual(p_restaurado['stock'], stock_antes)
+
 if __name__ == '__main__':
     unittest.main()

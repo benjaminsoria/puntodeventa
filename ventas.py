@@ -9,10 +9,104 @@ try:
     import tkinter as tk
     from tkinter import ttk, messagebox
 except ImportError:
-    pass
+    tk = None
+    ttk = None
+    messagebox = None
+
+_FrameBase = tk.Frame if tk else object
 
 import database
 import ticket
+
+def interpretar_cantidad(texto, valor_defecto=1.0):
+    """
+    Interpreta cantidades numéricas, decimales, fraccionarias o con unidades:
+    '0.5', '.500', '0.500', '0,500', ',5' -> 0.5
+    '500g', '250 gr', '100 gramos' -> 0.5, 0.25, 0.1
+    '1/2', '1/4', '3/4' -> 0.5, 0.25, 0.75
+    '2' -> 2.0
+    """
+    if texto is None:
+        return valor_defecto
+    s = str(texto).strip().lower().replace(',', '.')
+    if not s:
+        return valor_defecto
+
+    # Fracciones comunes
+    if s in ('1/2', '0.5'):
+        return 0.5
+    if s in ('1/4', '0.25'):
+        return 0.25
+    if s in ('3/4', '0.75'):
+        return 0.75
+    if '/' in s:
+        partes = s.split('/')
+        if len(partes) == 2:
+            try:
+                num = float(partes[0].strip())
+                den = float(partes[1].strip())
+                if den != 0:
+                    return num / den
+            except ValueError:
+                pass
+
+    # Sufijos de kilos y gramos (revisar 'kg' antes de 'g')
+    if s.endswith('kilos'):
+        try:
+            return float(s[:-5].strip())
+        except ValueError:
+            pass
+    elif s.endswith('kilo'):
+        try:
+            return float(s[:-4].strip())
+        except ValueError:
+            pass
+    elif s.endswith('kg'):
+        try:
+            return float(s[:-2].strip())
+        except ValueError:
+            pass
+    elif s.endswith('gramos'):
+        try:
+            return float(s[:-6].strip()) / 1000.0
+        except ValueError:
+            pass
+    elif s.endswith('gr'):
+        try:
+            return float(s[:-2].strip()) / 1000.0
+        except ValueError:
+            pass
+    elif s.endswith('g'):
+        try:
+            return float(s[:-1].strip()) / 1000.0
+        except ValueError:
+            pass
+    elif s.endswith('k'):
+        try:
+            return float(s[:-1].strip())
+        except ValueError:
+            pass
+
+    # Float directo (ej. .500, 0.5, 2, etc.)
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+def formatear_cantidad(cant):
+    """
+    Formatea la cantidad de manera amigable.
+    Si es entero: '1', '2'.
+    Si es decimal: muestra decimales limpios (ej. '0.500', '0.250', '1.500').
+    """
+    try:
+        c = float(cant)
+        if c.is_integer():
+            return "{:.0f}".format(c)
+        return "{:.3f}".format(c)
+    except (ValueError, TypeError):
+        return str(cant)
+
 
 class DialogoCobro(object):
     """Ventana modal grande para realizar el cobro, calcular cambio y confirmar la venta."""
@@ -355,7 +449,323 @@ class DialogoBuscarProducto(object):
         self.callback_seleccion(id_prod)
 
 
-class FrameVentas(tk.Frame):
+class DialogoArticuloNoCatalogado(object):
+    """
+    Ventana modal para registrar un artículo no catalogado para la venta actual
+    (ej. dulces sueltos por kilo, bolsas a granel, mercancía sin código).
+    Permite fijar precio por kilo/unidad y cantidad decimal (ej. .500 gramos, 1/4 kg, etc.).
+    """
+
+    def __init__(self, parent, callback_agregar, nombre_inicial="", cantidad_inicial="1"):
+        self.parent = parent
+        self.callback_agregar = callback_agregar
+        self.nombre_inicial = nombre_inicial.strip() if nombre_inicial else "Dulces a Granel"
+        self.cantidad_inicial = str(cantidad_inicial).strip() if cantidad_inicial else ".500"
+
+        self.top = tk.Toplevel(parent)
+        self.top.title("Artículo No Catalogado / Venta a Granel")
+        self.top.geometry("540x630")
+        self.top.resizable(False, False)
+        self.top.transient(parent)
+        self.top.grab_set()
+
+        self.centrar_ventana(540, 630)
+        self.crear_interfaz()
+
+        # Atajos de teclado
+        self.top.bind("<Escape>", lambda event: self.top.destroy())
+
+    def centrar_ventana(self, ancho, alto):
+        self.top.update_idletasks()
+        x = (self.top.winfo_screenwidth() // 2) - (ancho // 2)
+        y = (self.top.winfo_screenheight() // 2) - (alto // 2)
+        self.top.geometry("{}x{}+{}+{}".format(ancho, alto, max(0, x), max(0, y)))
+
+    def crear_interfaz(self):
+        frame_principal = tk.Frame(self.top, padx=18, pady=12, bg="#F0F4F8")
+        frame_principal.pack(fill=tk.BOTH, expand=True)
+
+        # Banner Superior
+        frame_header = tk.Frame(frame_principal, bg="#4A5568", padx=12, pady=10)
+        frame_header.pack(fill=tk.X, pady=(0, 10))
+
+        tk.Label(frame_header, text="ARTÍCULO NO CATALOGADO / GRANEL", font=("Arial", 13, "bold"), fg="#FFFFFF", bg="#4A5568").pack()
+        tk.Label(frame_header, text="Venta manual de dulces sueltos por kilo, piezas o varios", font=("Arial", 9), fg="#CBD5E0", bg="#4A5568").pack()
+
+        # 1. Nombre / Descripción del Dulce
+        f_nombre = tk.Frame(frame_principal, bg="#F0F4F8")
+        f_nombre.pack(fill=tk.X, pady=4)
+
+        tk.Label(f_nombre, text="Nombre del Dulce / Artículo:", font=("Arial", 11, "bold"), bg="#F0F4F8", fg="#2D3748").pack(anchor="w")
+        self.var_nombre = tk.StringVar(value=self.nombre_inicial)
+        self.entry_nombre = tk.Entry(f_nombre, textvariable=self.var_nombre, font=("Arial", 13), width=32)
+        self.entry_nombre.pack(fill=tk.X, pady=2)
+        self.entry_nombre.bind("<Return>", lambda e: self.entry_precio.focus_set())
+        self.entry_nombre.bind("<KP_Enter>", lambda e: self.entry_precio.focus_set())
+
+        # Botones de sugerencias de nombres comunes
+        f_sugerencias = tk.Frame(frame_principal, bg="#F0F4F8")
+        f_sugerencias.pack(fill=tk.X, pady=(0, 6))
+        sug_nombres = ["Dulces a Granel", "Gomitas Sueltas", "Chocolates Sueltos", "Artículo Varios"]
+        for sug in sug_nombres:
+            btn_s = tk.Button(f_sugerencias, text=sug, font=("Arial", 8), bg="#E2E8F0", padx=4, pady=1,
+                              command=lambda s=sug: self.asignar_nombre(s))
+            btn_s.pack(side=tk.LEFT, padx=2)
+
+        # 2. Precio Unitario ($ por Kilo o Pieza)
+        f_precio = tk.Frame(frame_principal, bg="#F0F4F8")
+        f_precio.pack(fill=tk.X, pady=4)
+
+        tk.Label(f_precio, text="Precio por Kilo o Pieza ($):", font=("Arial", 11, "bold"), bg="#F0F4F8", fg="#2D3748").pack(anchor="w")
+        self.var_precio = tk.StringVar(value="")
+        self.entry_precio = tk.Entry(f_precio, textvariable=self.var_precio, font=("Arial", 16, "bold"), width=15, justify="center")
+        self.entry_precio.pack(anchor="w", pady=2)
+        self.entry_precio.bind("<Return>", lambda e: self.entry_cantidad.focus_set())
+        self.entry_precio.bind("<KP_Enter>", lambda e: self.entry_cantidad.focus_set())
+        self.var_precio.trace("w", self.recalcular_subtotal)
+
+        # 3. Cantidad / Peso
+        f_cant = tk.Frame(frame_principal, bg="#F0F4F8")
+        f_cant.pack(fill=tk.X, pady=4)
+
+        tk.Label(f_cant, text="Cantidad o Peso (ej. .500, 0.5, 1, 0.250):", font=("Arial", 11, "bold"), bg="#F0F4F8", fg="#2D3748").pack(anchor="w")
+        val_cant_ini = self.cantidad_inicial if self.cantidad_inicial != "1" else ".500"
+        self.var_cantidad = tk.StringVar(value=val_cant_ini)
+        self.entry_cantidad = tk.Entry(f_cant, textvariable=self.var_cantidad, font=("Arial", 16, "bold"), width=15, justify="center")
+        self.entry_cantidad.pack(anchor="w", pady=2)
+        self.entry_cantidad.bind("<Return>", lambda e: self.confirmar())
+        self.entry_cantidad.bind("<KP_Enter>", lambda e: self.confirmar())
+        self.var_cantidad.trace("w", self.recalcular_subtotal)
+
+        # Botones rápidos de peso común en dulcería
+        f_pesos = tk.LabelFrame(frame_principal, text=" Porciones y Pesos Rápidos (Clic para seleccionar) ",
+                                font=("Arial", 9, "bold"), bg="#F0F4F8", fg="#4A5568", padx=6, pady=4)
+        f_pesos.pack(fill=tk.X, pady=4)
+
+        pesos = [
+            ("100g", ".100"),
+            ("1/4 Kg", ".250"),
+            ("1/2 Kg", ".500"),
+            ("3/4 Kg", ".750"),
+            ("1.0 Kg", "1"),
+            ("1.5 Kg", "1.500"),
+            ("2.0 Kg", "2")
+        ]
+        sub_p = tk.Frame(f_pesos, bg="#F0F4F8")
+        sub_p.pack(fill=tk.X)
+        for etiqueta, val in pesos:
+            btn_p = tk.Button(sub_p, text=etiqueta, font=("Arial", 9, "bold"), bg="#EDF2F7", padx=4, pady=3,
+                             command=lambda v=val: self.asignar_peso(v))
+            btn_p.pack(side=tk.LEFT, padx=2)
+
+        # 4. Calculadora por Importe en Dinero ($)
+        f_dinero = tk.Frame(frame_principal, bg="#EBF8FF", padx=8, pady=6, relief=tk.GROOVE, bd=1)
+        f_dinero.pack(fill=tk.X, pady=6)
+
+        tk.Label(f_dinero, text="¿El cliente pide una cantidad fija de dinero? (ej. $50 de dulces):",
+                 font=("Arial", 9, "bold"), bg="#EBF8FF", fg="#2B6CB0").pack(anchor="w")
+        sub_d = tk.Frame(f_dinero, bg="#EBF8FF")
+        sub_d.pack(fill=tk.X, pady=2)
+
+        tk.Label(sub_d, text="Dinero solicitado $: ", font=("Arial", 10), bg="#EBF8FF", fg="#2D3748").pack(side=tk.LEFT)
+        self.var_dinero = tk.StringVar(value="")
+        self.entry_dinero = tk.Entry(sub_d, textvariable=self.var_dinero, font=("Arial", 11, "bold"), width=10, justify="center")
+        self.entry_dinero.pack(side=tk.LEFT, padx=5)
+        self.var_dinero.trace("w", self.al_cambiar_dinero)
+        tk.Label(sub_d, text="(Calcula el peso automáticamente)", font=("Arial", 8, "italic"), bg="#EBF8FF", fg="#718096").pack(side=tk.LEFT, padx=4)
+
+        # 5. Banner de Subtotal en Vivo
+        self.frame_subtotal = tk.Frame(frame_principal, bg="#C6F6D5", padx=12, pady=8, relief=tk.RIDGE, bd=2)
+        self.frame_subtotal.pack(fill=tk.X, pady=8)
+
+        tk.Label(self.frame_subtotal, text="SUBTOTAL A COBRAR:", font=("Arial", 11, "bold"), fg="#22543D", bg="#C6F6D5").pack()
+        self.lbl_subtotal = tk.Label(self.frame_subtotal, text="$0.00", font=("Arial", 24, "bold"), fg="#276749", bg="#C6F6D5")
+        self.lbl_subtotal.pack()
+
+        # 6. Botones de Acción
+        f_acciones = tk.Frame(frame_principal, bg="#F0F4F8")
+        f_acciones.pack(fill=tk.X, pady=(6, 0))
+
+        self.btn_confirmar = tk.Button(f_acciones, text="✓ AGREGAR A LA VENTA (Enter)", font=("Arial", 13, "bold"),
+                                       bg="#38A169", fg="white", pady=8, cursor="hand2", command=self.confirmar)
+        self.btn_confirmar.pack(fill=tk.X, pady=3)
+
+        btn_cancelar = tk.Button(f_acciones, text="Cancelar (Esc)", font=("Arial", 10), bg="#E2E8F0", fg="#4A5568", pady=4,
+                                 command=self.top.destroy)
+        btn_cancelar.pack(fill=tk.X)
+
+        # Foco inicial inteligente
+        if self.nombre_inicial and self.nombre_inicial != "Dulces a Granel":
+            self.entry_precio.focus_set()
+        else:
+            self.entry_nombre.focus_set()
+
+    def asignar_nombre(self, texto):
+        self.var_nombre.set(texto)
+        self.entry_precio.focus_set()
+
+    def asignar_peso(self, peso_str):
+        self.var_cantidad.set(peso_str)
+        self.entry_cantidad.focus_set()
+
+    def al_cambiar_dinero(self, *args):
+        txt_dinero = self.var_dinero.get().strip()
+        txt_precio = self.var_precio.get().strip()
+        if not txt_dinero or not txt_precio:
+            return
+        try:
+            monto = float(txt_dinero.replace(',', '.'))
+            precio = float(txt_precio.replace(',', '.'))
+            if precio > 0 and monto > 0:
+                calc_cant = round(monto / precio, 3)
+                self.var_cantidad.set("{:.3f}".format(calc_cant))
+        except ValueError:
+            pass
+
+    def recalcular_subtotal(self, *args):
+        txt_precio = self.var_precio.get().strip()
+        txt_cant = self.var_cantidad.get().strip()
+        cant = interpretar_cantidad(txt_cant, valor_defecto=None)
+        try:
+            prec = float(txt_precio.replace(',', '.'))
+        except (ValueError, TypeError):
+            prec = None
+
+        if cant is not None and prec is not None and cant > 0 and prec >= 0:
+            sub = round(cant * prec, 2)
+            self.lbl_subtotal.config(text="${:.2f}".format(sub), fg="#276749")
+            self.frame_subtotal.config(bg="#C6F6D5")
+        else:
+            self.lbl_subtotal.config(text="$0.00", fg="#718096")
+
+    def confirmar(self):
+        nombre = self.var_nombre.get().strip()
+        if not nombre:
+            messagebox.showwarning("Falta Nombre", "Por favor escriba el nombre o descripción del dulce.", parent=self.top)
+            self.entry_nombre.focus_set()
+            return
+
+        txt_precio = self.var_precio.get().strip()
+        try:
+            precio = float(txt_precio.replace(',', '.'))
+            if precio <= 0:
+                raise ValueError()
+        except (ValueError, TypeError):
+            messagebox.showwarning("Precio Inválido", "Por favor ingrese un precio válido mayor a cero.", parent=self.top)
+            self.entry_precio.focus_set()
+            return
+
+        txt_cant = self.var_cantidad.get().strip()
+        cant = interpretar_cantidad(txt_cant, valor_defecto=None)
+        if cant is None or cant <= 0:
+            messagebox.showwarning("Cantidad Inválida", "Por favor ingrese una cantidad o peso válido (ej. .500, 0.5, 1, 0.250).", parent=self.top)
+            self.entry_cantidad.focus_set()
+            return
+
+        self.top.destroy()
+        self.callback_agregar(nombre, precio, cant)
+
+
+class DialogoModificarCantidad(object):
+    """Ventana rápida para modificar la cantidad o peso de un producto seleccionado en el carrito."""
+
+    def __init__(self, parent, item_carrito, callback_actualizar):
+        self.parent = parent
+        self.item = item_carrito
+        self.callback_actualizar = callback_actualizar
+
+        self.top = tk.Toplevel(parent)
+        self.top.title("Modificar Cantidad / Peso")
+        self.top.geometry("420x370")
+        self.top.resizable(False, False)
+        self.top.transient(parent)
+        self.top.grab_set()
+
+        self.centrar_ventana(420, 370)
+        self.crear_interfaz()
+
+        self.top.bind("<Escape>", lambda e: self.top.destroy())
+
+    def centrar_ventana(self, ancho, alto):
+        self.top.update_idletasks()
+        x = (self.top.winfo_screenwidth() // 2) - (ancho // 2)
+        y = (self.top.winfo_screenheight() // 2) - (alto // 2)
+        self.top.geometry("{}x{}+{}+{}".format(ancho, alto, max(0, x), max(0, y)))
+
+    def crear_interfaz(self):
+        f = tk.Frame(self.top, padx=16, pady=12, bg="#F0F4F8")
+        f.pack(fill=tk.BOTH, expand=True)
+
+        tk.Label(f, text=self.item['nombre'], font=("Arial", 12, "bold"), fg="#1A202C", bg="#F0F4F8", wraplength=380).pack(pady=(0, 4))
+        tk.Label(f, text="Precio Unitario: ${:.2f}".format(self.item['precio']), font=("Arial", 10), fg="#4A5568", bg="#F0F4F8").pack(pady=(0, 10))
+
+        tk.Label(f, text="Nueva Cantidad o Peso (ej. .500, 0.5, 1, 0.250):", font=("Arial", 11, "bold"), fg="#2D3748", bg="#F0F4F8").pack(anchor="w")
+
+        cant_str = formatear_cantidad(self.item['cantidad'])
+        self.var_cant = tk.StringVar(value=cant_str)
+        self.entry_cant = tk.Entry(f, textvariable=self.var_cant, font=("Arial", 16, "bold"), width=12, justify="center")
+        self.entry_cant.pack(pady=4)
+        self.entry_cant.focus_set()
+        self.entry_cant.select_range(0, tk.END)
+
+        self.entry_cant.bind("<Return>", lambda e: self.confirmar())
+        self.entry_cant.bind("<KP_Enter>", lambda e: self.confirmar())
+
+        # Botones rápidos
+        f_pesos = tk.Frame(f, bg="#F0F4F8")
+        f_pesos.pack(fill=tk.X, pady=8)
+
+        pesos = [("1/4 Kg", ".250"), ("1/2 Kg", ".500"), ("3/4 Kg", ".750"), ("1 Kg", "1"), ("+1", "+1"), ("-1", "-1")]
+        for lbl, v in pesos:
+            btn = tk.Button(f_pesos, text=lbl, font=("Arial", 9, "bold"), bg="#EDF2F7", padx=3, pady=2,
+                            command=lambda val=v: self.ajustar_valor(val))
+            btn.pack(side=tk.LEFT, padx=2)
+
+        # Subtotal
+        self.lbl_sub = tk.Label(f, text="", font=("Arial", 12, "bold"), fg="#276749", bg="#F0F4F8")
+        self.lbl_sub.pack(pady=6)
+        self.var_cant.trace("w", self.actualizar_sub)
+        self.actualizar_sub()
+
+        # Botones inferiores
+        btn_ok = tk.Button(f, text="✓ Actualizar Cantidad (Enter)", font=("Arial", 12, "bold"), bg="#38A169", fg="white", pady=6,
+                           command=self.confirmar)
+        btn_ok.pack(fill=tk.X, pady=4)
+
+        btn_cancel = tk.Button(f, text="Cancelar (Esc)", font=("Arial", 10), bg="#E2E8F0", fg="#4A5568", command=self.top.destroy)
+        btn_cancel.pack(fill=tk.X)
+
+    def ajustar_valor(self, val):
+        if val == "+1":
+            c = interpretar_cantidad(self.var_cant.get().strip(), 0.0) or 0.0
+            self.var_cant.set(formatear_cantidad(c + 1))
+        elif val == "-1":
+            c = interpretar_cantidad(self.var_cant.get().strip(), 0.0) or 0.0
+            if c > 1:
+                self.var_cant.set(formatear_cantidad(c - 1))
+        else:
+            self.var_cant.set(val)
+        self.entry_cant.focus_set()
+
+    def actualizar_sub(self, *args):
+        c = interpretar_cantidad(self.var_cant.get().strip(), None)
+        if c is not None and c > 0:
+            sub = round(c * self.item['precio'], 2)
+            self.lbl_sub.config(text="Nuevo Subtotal: ${:.2f}".format(sub))
+        else:
+            self.lbl_sub.config(text="")
+
+    def confirmar(self):
+        c = interpretar_cantidad(self.var_cant.get().strip(), None)
+        if c is None or c <= 0:
+            messagebox.showwarning("Atención", "Por favor ingrese una cantidad válida mayor a cero.", parent=self.top)
+            self.entry_cant.focus_set()
+            return
+        self.top.destroy()
+        self.callback_actualizar(c)
+
+
+class FrameVentas(_FrameBase):
     """Pantalla principal de ventas / punto de venta."""
 
     def __init__(self, parent, app_principal):
@@ -401,6 +811,11 @@ class FrameVentas(tk.Frame):
                                         command=self.abrir_buscador)
         btn_buscar_catalogo.pack(side=tk.LEFT, padx=5)
 
+        btn_no_catalogado = tk.Button(fila_busqueda, text="+ Art. No Catalogado (F7)", font=("Arial", 10, "bold"),
+                                      bg="#6B46C1", fg="white", padx=10, pady=2, cursor="hand2",
+                                      command=self.abrir_dialogo_no_catalogado)
+        btn_no_catalogado.pack(side=tk.LEFT, padx=5)
+
         # Fila de Botones Rápidos (Dulces más vendidos)
         self.frame_favoritos = tk.LabelFrame(frame_superior, text=" Dulces Rápidos (Clic para agregar 1 pieza) ", font=("Arial", 10, "bold"), bg="#EDF2F7", fg="#4A5568", padx=5, pady=5)
         self.frame_favoritos.pack(fill=tk.X, pady=(8, 0))
@@ -434,10 +849,16 @@ class FrameVentas(tk.Frame):
 
         self.tree_carrito.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scroll_y.pack(side=tk.LEFT, fill=tk.Y)
+        self.tree_carrito.bind("<Double-1>", lambda e: self.modificar_cantidad_seleccionado())
 
         # Barra de botones del carrito (debajo de la tabla)
         frame_acciones_carrito = tk.Frame(self, bg="#F7FAFC", padx=10, pady=5)
         frame_acciones_carrito.pack(fill=tk.X)
+
+        btn_modificar_cant = tk.Button(frame_acciones_carrito, text="[ Modificar Cantidad / Peso ]", font=("Arial", 10, "bold"),
+                                       bg="#EBF8FF", fg="#2B6CB0", padx=8, pady=4,
+                                       command=self.modificar_cantidad_seleccionado)
+        btn_modificar_cant.pack(side=tk.LEFT, padx=4)
 
         btn_mas = tk.Button(frame_acciones_carrito, text="[ +1 Pieza ]", font=("Arial", 10, "bold"), bg="#EDF2F7", padx=8, pady=4,
                             command=self.sumar_uno_seleccionado)
@@ -484,7 +905,7 @@ class FrameVentas(tk.Frame):
                                    cursor="hand2", command=self.abrir_cajon_manual)
         self.btn_cajon.pack(fill=tk.X, pady=(0, 10))
 
-        lbl_ayuda = tk.Label(frame_derecho, text="Atajos rápidos:\n- F12: Cobrar venta actual\n- F8: Abrir cajón de dinero\n- Enter: Agregar dulce escaneado\n- Esc: Regresar a búsqueda",
+        lbl_ayuda = tk.Label(frame_derecho, text="Atajos rápidos:\n- F7: Art. No Catalogado / Granel\n- F12: Cobrar venta actual\n- F8: Abrir cajón de dinero\n- Doble clic en carrito: Modificar peso\n- Enter: Agregar dulce escaneado\n- Esc: Regresar a búsqueda",
                              font=("Arial", 9), justify="left", bg="#EDF2F7", fg="#718096")
         lbl_ayuda.pack(side=tk.BOTTOM, pady=5)
 
@@ -520,11 +941,8 @@ class FrameVentas(tk.Frame):
             self.entry_busqueda.focus_set()
             return
 
-        try:
-            cant = float(self.var_cantidad.get().strip())
-            if cant <= 0:
-                cant = 1.0
-        except ValueError:
+        cant = interpretar_cantidad(self.var_cantidad.get().strip(), 1.0)
+        if cant is None or cant <= 0:
             cant = 1.0
             self.var_cantidad.set("1")
 
@@ -549,8 +967,70 @@ class FrameVentas(tk.Frame):
             self.var_busqueda.set("")
             self.var_cantidad.set("1")
         else:
-            messagebox.showinfo("No encontrado", "No se encontró ningún dulce con el código o nombre '{}'.".format(texto), parent=self)
-            self.entry_busqueda.focus_set()
+            resp = messagebox.askyesno(
+                "Dulce no catalogado",
+                "No se encontró ningún dulce con el código o nombre '{}'.\n\n"
+                "¿Desea agregarlo como artículo no catalogado para esta venta?".format(texto),
+                parent=self
+            )
+            if resp:
+                self.abrir_dialogo_no_catalogado(nombre_inicial=texto, cantidad_inicial=cant)
+            else:
+                self.entry_busqueda.focus_set()
+
+    def abrir_dialogo_no_catalogado(self, nombre_inicial="", cantidad_inicial=None):
+        if cantidad_inicial is None:
+            cant_actual = self.var_cantidad.get().strip()
+            cantidad_inicial = cant_actual if cant_actual else ".500"
+        if not nombre_inicial:
+            nombre_inicial = self.var_busqueda.get().strip()
+        DialogoArticuloNoCatalogado(self, self.agregar_articulo_no_catalogado, nombre_inicial, cantidad_inicial)
+
+    def agregar_articulo_no_catalogado(self, nombre, precio, cantidad, costo=0.0):
+        cant = float(cantidad)
+        prec = float(precio)
+        sub = round(cant * prec, 2)
+
+        # Si ya existe exactamente el mismo artículo no catalogado al mismo precio, acumular cantidad
+        encontrado = False
+        for item in self.carrito:
+            if item.get('id') is None and item['nombre'].strip().lower() == nombre.strip().lower() and abs(item['precio'] - prec) < 0.001:
+                item['cantidad'] += cant
+                item['subtotal'] = round(item['cantidad'] * item['precio'], 2)
+                encontrado = True
+                break
+
+        if not encontrado:
+            self.carrito.append({
+                'id': None,
+                'codigo': 'MANUAL',
+                'nombre': nombre.strip(),
+                'precio': prec,
+                'costo': float(costo),
+                'cantidad': cant,
+                'subtotal': sub
+            })
+
+        self.actualizar_vista_carrito()
+        self.var_busqueda.set("")
+        self.var_cantidad.set("1")
+        self.entry_busqueda.focus_set()
+
+    def modificar_cantidad_seleccionado(self):
+        sel = self.tree_carrito.selection()
+        if not sel:
+            messagebox.showinfo("Seleccionar", "Por favor seleccione un dulce del carrito para modificar su cantidad o peso.", parent=self)
+            return
+        idx = int(sel[0])
+        item = self.carrito[idx]
+
+        def callback_actualizar(nueva_cant):
+            self.carrito[idx]['cantidad'] = float(nueva_cant)
+            self.carrito[idx]['subtotal'] = round(float(nueva_cant) * self.carrito[idx]['precio'], 2)
+            self.actualizar_vista_carrito()
+            self.tree_carrito.selection_set(str(idx))
+
+        DialogoModificarCantidad(self, item, callback_actualizar)
 
     def abrir_buscador(self):
         DialogoBuscarProducto(self, "", lambda id_p: self.agregar_por_id(id_p, 1))
@@ -598,10 +1078,10 @@ class FrameVentas(tk.Frame):
             total_venta += item['subtotal']
             total_piezas += item['cantidad']
 
-            str_cant = "{:.0f}".format(item['cantidad']) if float(item['cantidad']).is_integer() else "{:.2f}".format(item['cantidad'])
+            str_cant = formatear_cantidad(item['cantidad'])
             self.tree_carrito.insert("", "end", iid=str(idx-1), values=(
                 idx,
-                item['codigo'],
+                item.get('codigo') or 'MANUAL',
                 item['nombre'],
                 "${:.2f}".format(item['precio']),
                 str_cant,
@@ -609,7 +1089,7 @@ class FrameVentas(tk.Frame):
             ))
 
         self.lbl_gran_total.config(text="${:.2f}".format(total_venta))
-        str_art = "{:.0f}".format(total_piezas) if total_piezas.is_integer() else "{:.2f}".format(total_piezas)
+        str_art = formatear_cantidad(total_piezas)
         self.lbl_cant_articulos.config(text="{} artículo(s)".format(str_art))
 
     def sumar_uno_seleccionado(self):

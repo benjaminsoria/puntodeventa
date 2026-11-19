@@ -175,7 +175,7 @@ class FrameReportes(tk.Frame):
 
         detalles = database.obtener_detalle_venta(id_venta)
         for d in detalles:
-            str_cant = "{:.0f}".format(d['cantidad']) if float(d['cantidad']).is_integer() else "{:.2f}".format(d['cantidad'])
+            str_cant = "{:.0f}".format(d['cantidad']) if float(d['cantidad']).is_integer() else "{:.3f}".format(d['cantidad'])
             self.tree_detalle.insert("", "end", values=(
                 str_cant,
                 d['nombre_producto'],

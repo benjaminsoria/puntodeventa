@@ -125,7 +125,7 @@ class AppPuntoDeVenta(tk.Tk):
         self.frame_bottom.pack(fill=tk.X, side=tk.BOTTOM)
 
         lbl_atajos = tk.Label(self.frame_bottom,
-                              text="Atajos:  [F1] Venta  |  [F2] Inventario  |  [F3] Caja  |  [F4] Historial  |  [F5] Ajustes  |  [F8] Abrir Cajón  |  [F12] Cobrar",
+                              text="Atajos:  [F1] Venta  |  [F2] Inventario  |  [F3] Caja  |  [F4] Historial  |  [F5] Ajustes  |  [F7] Art. Manual  |  [F8] Abrir Cajón  |  [F12] Cobrar",
                               font=("Arial", 9, "bold"), fg="#E2E8F0", bg="#2D3748")
         lbl_atajos.pack(side=tk.LEFT)
 
@@ -138,6 +138,7 @@ class AppPuntoDeVenta(tk.Tk):
         self.bind("<F3>", lambda e: self.notebook.select(2))
         self.bind("<F4>", lambda e: self.notebook.select(3))
         self.bind("<F5>", lambda e: self.notebook.select(4))
+        self.bind("<F7>", lambda e: self.pantalla_ventas.abrir_dialogo_no_catalogado())
         self.bind("<F8>", lambda e: self.pantalla_ventas.abrir_cajon_manual())
         self.bind("<F12>", lambda e: self.pantalla_ventas.iniciar_cobro())
 
